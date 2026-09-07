@@ -1,0 +1,1922 @@
+[
+ {
+  "kode": "bf_001",
+  "nama": "URT",
+  "kategori": "U",
+  "halaman_pdf": 8,
+  "foto": "assets/buku_foto/bf_001.jpg",
+  "kb": 50
+ },
+ {
+  "kode": "bf_002",
+  "nama": "Cangkir",
+  "kategori": "C",
+  "halaman_pdf": 12,
+  "foto": "assets/buku_foto/bf_002.jpg",
+  "kb": 28
+ },
+ {
+  "kode": "bf_003",
+  "nama": "Aneka Gelas",
+  "kategori": "A",
+  "halaman_pdf": 13,
+  "foto": "assets/buku_foto/bf_003.jpg",
+  "kb": 33
+ },
+ {
+  "kode": "bf_004",
+  "nama": "Mangkok",
+  "kategori": "M",
+  "halaman_pdf": 14,
+  "foto": "assets/buku_foto/bf_004.jpg",
+  "kb": 24
+ },
+ {
+  "kode": "bf_005",
+  "nama": "Piring Bayi",
+  "kategori": "P",
+  "halaman_pdf": 15,
+  "foto": "assets/buku_foto/bf_005.jpg",
+  "kb": 27
+ },
+ {
+  "kode": "bf_006",
+  "nama": "Piring Makan",
+  "kategori": "P",
+  "halaman_pdf": 16,
+  "foto": "assets/buku_foto/bf_006.jpg",
+  "kb": 31
+ },
+ {
+  "kode": "bf_007",
+  "nama": "Centong Nasi",
+  "kategori": "C",
+  "halaman_pdf": 17,
+  "foto": "assets/buku_foto/bf_007.jpg",
+  "kb": 23
+ },
+ {
+  "kode": "bf_008",
+  "nama": "Sendok Sayur",
+  "kategori": "S",
+  "halaman_pdf": 18,
+  "foto": "assets/buku_foto/bf_008.jpg",
+  "kb": 27
+ },
+ {
+  "kode": "bf_009",
+  "nama": "Sendok",
+  "kategori": "S",
+  "halaman_pdf": 19,
+  "foto": "assets/buku_foto/bf_009.jpg",
+  "kb": 22
+ },
+ {
+  "kode": "bf_010",
+  "nama": "A1. Nasi Putih (Piring)",
+  "kategori": "A",
+  "halaman_pdf": 21,
+  "foto": "assets/buku_foto/bf_010.jpg",
+  "kb": 36
+ },
+ {
+  "kode": "bf_011",
+  "nama": "A2. Nasi Putih (Centong&Sendok)",
+  "kategori": "A",
+  "halaman_pdf": 22,
+  "foto": "assets/buku_foto/bf_011.jpg",
+  "kb": 39
+ },
+ {
+  "kode": "bf_012",
+  "nama": "A3. Nasi Tim",
+  "kategori": "A",
+  "halaman_pdf": 23,
+  "foto": "assets/buku_foto/bf_012.jpg",
+  "kb": 36
+ },
+ {
+  "kode": "bf_013",
+  "nama": "A4. Nasi Tim Ayam",
+  "kategori": "A",
+  "halaman_pdf": 24,
+  "foto": "assets/buku_foto/bf_013.jpg",
+  "kb": 37
+ },
+ {
+  "kode": "bf_014",
+  "nama": "A5. Bubur Nasi Kental",
+  "kategori": "A",
+  "halaman_pdf": 25,
+  "foto": "assets/buku_foto/bf_014.jpg",
+  "kb": 31
+ },
+ {
+  "kode": "bf_015",
+  "nama": "A6. Bubur Nasi Encer",
+  "kategori": "A",
+  "halaman_pdf": 26,
+  "foto": "assets/buku_foto/bf_015.jpg",
+  "kb": 34
+ },
+ {
+  "kode": "bf_016",
+  "nama": "A7. Lontong Polos",
+  "kategori": "A",
+  "halaman_pdf": 27,
+  "foto": "assets/buku_foto/bf_016.jpg",
+  "kb": 36
+ },
+ {
+  "kode": "bf_017",
+  "nama": "A8. Ketupat",
+  "kategori": "A",
+  "halaman_pdf": 28,
+  "foto": "assets/buku_foto/bf_017.jpg",
+  "kb": 40
+ },
+ {
+  "kode": "bf_018",
+  "nama": "A9. Nasi Jagung",
+  "kategori": "A",
+  "halaman_pdf": 29,
+  "foto": "assets/buku_foto/bf_018.jpg",
+  "kb": 30
+ },
+ {
+  "kode": "bf_019",
+  "nama": "A10. Jagung Rebus",
+  "kategori": "A",
+  "halaman_pdf": 30,
+  "foto": "assets/buku_foto/bf_019.jpg",
+  "kb": 45
+ },
+ {
+  "kode": "bf_020",
+  "nama": "A11. Jagung Pop Corn",
+  "kategori": "A",
+  "halaman_pdf": 31,
+  "foto": "assets/buku_foto/bf_020.jpg",
+  "kb": 41
+ },
+ {
+  "kode": "bf_021",
+  "nama": "A12. Papeda",
+  "kategori": "A",
+  "halaman_pdf": 32,
+  "foto": "assets/buku_foto/bf_021.jpg",
+  "kb": 28
+ },
+ {
+  "kode": "bf_022",
+  "nama": "A13. Kentang Rebus",
+  "kategori": "A",
+  "halaman_pdf": 33,
+  "foto": "assets/buku_foto/bf_022.jpg",
+  "kb": 38
+ },
+ {
+  "kode": "bf_023",
+  "nama": "A14. Perkedel Kentang",
+  "kategori": "A",
+  "halaman_pdf": 34,
+  "foto": "assets/buku_foto/bf_023.jpg",
+  "kb": 37
+ },
+ {
+  "kode": "bf_024",
+  "nama": "A15. Kentang Balado",
+  "kategori": "A",
+  "halaman_pdf": 35,
+  "foto": "assets/buku_foto/bf_024.jpg",
+  "kb": 36
+ },
+ {
+  "kode": "bf_025",
+  "nama": "A16. Kentang Goreng Stick",
+  "kategori": "A",
+  "halaman_pdf": 36,
+  "foto": "assets/buku_foto/bf_025.jpg",
+  "kb": 38
+ },
+ {
+  "kode": "bf_026",
+  "nama": "A17. Talas Kukus",
+  "kategori": "A",
+  "halaman_pdf": 37,
+  "foto": "assets/buku_foto/bf_026.jpg",
+  "kb": 34
+ },
+ {
+  "kode": "bf_027",
+  "nama": "A18. Talas Goreng",
+  "kategori": "A",
+  "halaman_pdf": 38,
+  "foto": "assets/buku_foto/bf_027.jpg",
+  "kb": 38
+ },
+ {
+  "kode": "bf_028",
+  "nama": "A19. Talas Belitung",
+  "kategori": "A",
+  "halaman_pdf": 39,
+  "foto": "assets/buku_foto/bf_028.jpg",
+  "kb": 47
+ },
+ {
+  "kode": "bf_029",
+  "nama": "A.20 Ubi Jalar Putih Rebus",
+  "kategori": "A",
+  "halaman_pdf": 40,
+  "foto": "assets/buku_foto/bf_029.jpg",
+  "kb": 41
+ },
+ {
+  "kode": "bf_030",
+  "nama": "A.21 Ubi Jalar Merah Rebus",
+  "kategori": "A",
+  "halaman_pdf": 41,
+  "foto": "assets/buku_foto/bf_030.jpg",
+  "kb": 44
+ },
+ {
+  "kode": "bf_031",
+  "nama": "A.22 Singkong Rebus",
+  "kategori": "A",
+  "halaman_pdf": 42,
+  "foto": "assets/buku_foto/bf_031.jpg",
+  "kb": 35
+ },
+ {
+  "kode": "bf_032",
+  "nama": "A.23 Singkong Parut",
+  "kategori": "A",
+  "halaman_pdf": 43,
+  "foto": "assets/buku_foto/bf_032.jpg",
+  "kb": 38
+ },
+ {
+  "kode": "bf_033",
+  "nama": "A.24 Mie Basah Rebus",
+  "kategori": "A",
+  "halaman_pdf": 44,
+  "foto": "assets/buku_foto/bf_033.jpg",
+  "kb": 43
+ },
+ {
+  "kode": "bf_034",
+  "nama": "A.25 Mie Kering Rebus",
+  "kategori": "A",
+  "halaman_pdf": 45,
+  "foto": "assets/buku_foto/bf_034.jpg",
+  "kb": 39
+ },
+ {
+  "kode": "bf_035",
+  "nama": "A.26 Bihun Rebus",
+  "kategori": "A",
+  "halaman_pdf": 46,
+  "foto": "assets/buku_foto/bf_035.jpg",
+  "kb": 31
+ },
+ {
+  "kode": "bf_036",
+  "nama": "A.27 Mie Aci / Glosor Goreng",
+  "kategori": "A",
+  "halaman_pdf": 47,
+  "foto": "assets/buku_foto/bf_036.jpg",
+  "kb": 40
+ },
+ {
+  "kode": "bf_037",
+  "nama": "A.28 Roti Tawar / Gandum",
+  "kategori": "A",
+  "halaman_pdf": 48,
+  "foto": "assets/buku_foto/bf_037.jpg",
+  "kb": 44
+ },
+ {
+  "kode": "bf_038",
+  "nama": "A.29 Roti Manis",
+  "kategori": "A",
+  "halaman_pdf": 49,
+  "foto": "assets/buku_foto/bf_038.jpg",
+  "kb": 26
+ },
+ {
+  "kode": "bf_039",
+  "nama": "A.30 Roti Tawar",
+  "kategori": "A",
+  "halaman_pdf": 50,
+  "foto": "assets/buku_foto/bf_039.jpg",
+  "kb": 29
+ },
+ {
+  "kode": "bf_040",
+  "nama": "A.31 Pisang Kepok Rebus",
+  "kategori": "A",
+  "halaman_pdf": 51,
+  "foto": "assets/buku_foto/bf_040.jpg",
+  "kb": 36
+ },
+ {
+  "kode": "bf_041",
+  "nama": "B.1 Daging Sapi Goreng / Empal",
+  "kategori": "B",
+  "halaman_pdf": 53,
+  "foto": "assets/buku_foto/bf_041.jpg",
+  "kb": 33
+ },
+ {
+  "kode": "bf_042",
+  "nama": "B.2 Daging Sapi Rendang",
+  "kategori": "B",
+  "halaman_pdf": 54,
+  "foto": "assets/buku_foto/bf_042.jpg",
+  "kb": 43
+ },
+ {
+  "kode": "bf_043",
+  "nama": "B.3 Semur Daging Sapi",
+  "kategori": "B",
+  "halaman_pdf": 55,
+  "foto": "assets/buku_foto/bf_043.jpg",
+  "kb": 36
+ },
+ {
+  "kode": "bf_044",
+  "nama": "C.5 Tumis Sawi",
+  "kategori": "C",
+  "halaman_pdf": 56,
+  "foto": "assets/buku_foto/bf_044.jpg",
+  "kb": 36
+ },
+ {
+  "kode": "bf_045",
+  "nama": "B.5 Daging Burger",
+  "kategori": "B",
+  "halaman_pdf": 57,
+  "foto": "assets/buku_foto/bf_045.jpg",
+  "kb": 30
+ },
+ {
+  "kode": "bf_046",
+  "nama": "B.6 Bakso Rebus",
+  "kategori": "B",
+  "halaman_pdf": 58,
+  "foto": "assets/buku_foto/bf_046.jpg",
+  "kb": 33
+ },
+ {
+  "kode": "bf_047",
+  "nama": "B.7 Abon Sapi",
+  "kategori": "B",
+  "halaman_pdf": 59,
+  "foto": "assets/buku_foto/bf_047.jpg",
+  "kb": 33
+ },
+ {
+  "kode": "bf_048",
+  "nama": "B.8 Daging Rebus",
+  "kategori": "B",
+  "halaman_pdf": 60,
+  "foto": "assets/buku_foto/bf_048.jpg",
+  "kb": 29
+ },
+ {
+  "kode": "bf_049",
+  "nama": "B.9 Ayam Goreng Dada",
+  "kategori": "B",
+  "halaman_pdf": 61,
+  "foto": "assets/buku_foto/bf_049.jpg",
+  "kb": 44
+ },
+ {
+  "kode": "bf_050",
+  "nama": "B.10 Ayam Goreng Paha",
+  "kategori": "B",
+  "halaman_pdf": 62,
+  "foto": "assets/buku_foto/bf_050.jpg",
+  "kb": 38
+ },
+ {
+  "kode": "bf_051",
+  "nama": "B.11 Ayam Goreng Kepala",
+  "kategori": "B",
+  "halaman_pdf": 63,
+  "foto": "assets/buku_foto/bf_051.jpg",
+  "kb": 35
+ },
+ {
+  "kode": "bf_052",
+  "nama": "B.12 Ayam Ceker Rebus",
+  "kategori": "B",
+  "halaman_pdf": 64,
+  "foto": "assets/buku_foto/bf_052.jpg",
+  "kb": 43
+ },
+ {
+  "kode": "bf_053",
+  "nama": "B.13 Rempela Hati Ayam Goreng",
+  "kategori": "B",
+  "halaman_pdf": 65,
+  "foto": "assets/buku_foto/bf_053.jpg",
+  "kb": 41
+ },
+ {
+  "kode": "bf_054",
+  "nama": "B.14 Nugget Goreng",
+  "kategori": "B",
+  "halaman_pdf": 66,
+  "foto": "assets/buku_foto/bf_054.jpg",
+  "kb": 36
+ },
+ {
+  "kode": "bf_055",
+  "nama": "B.15 Sate Hati Ayam",
+  "kategori": "B",
+  "halaman_pdf": 67,
+  "foto": "assets/buku_foto/bf_055.jpg",
+  "kb": 30
+ },
+ {
+  "kode": "bf_056",
+  "nama": "B.16 Ayam Suir",
+  "kategori": "B",
+  "halaman_pdf": 68,
+  "foto": "assets/buku_foto/bf_056.jpg",
+  "kb": 28
+ },
+ {
+  "kode": "bf_057",
+  "nama": "B.17 Sate Usus Ayam",
+  "kategori": "B",
+  "halaman_pdf": 69,
+  "foto": "assets/buku_foto/bf_057.jpg",
+  "kb": 39
+ },
+ {
+  "kode": "bf_058",
+  "nama": "B.18 Ikan Mas Pepes",
+  "kategori": "B",
+  "halaman_pdf": 70,
+  "foto": "assets/buku_foto/bf_058.jpg",
+  "kb": 48
+ },
+ {
+  "kode": "bf_059",
+  "nama": "B.19 Ikan Mas Goreng",
+  "kategori": "B",
+  "halaman_pdf": 71,
+  "foto": "assets/buku_foto/bf_059.jpg",
+  "kb": 60
+ },
+ {
+  "kode": "bf_060",
+  "nama": "B.20 Ikan Kakap Goreng",
+  "kategori": "B",
+  "halaman_pdf": 72,
+  "foto": "assets/buku_foto/bf_060.jpg",
+  "kb": 58
+ },
+ {
+  "kode": "bf_061",
+  "nama": "B.21 Ikan Kakap Kuah",
+  "kategori": "B",
+  "halaman_pdf": 73,
+  "foto": "assets/buku_foto/bf_061.jpg",
+  "kb": 55
+ },
+ {
+  "kode": "bf_062",
+  "nama": "B.22 Ikan Bandeng Goreng",
+  "kategori": "B",
+  "halaman_pdf": 74,
+  "foto": "assets/buku_foto/bf_062.jpg",
+  "kb": 52
+ },
+ {
+  "kode": "bf_063",
+  "nama": "B.23 Ikan Bandeng Kuah",
+  "kategori": "B",
+  "halaman_pdf": 75,
+  "foto": "assets/buku_foto/bf_063.jpg",
+  "kb": 48
+ },
+ {
+  "kode": "bf_064",
+  "nama": "B.24 Ikan Kembung Goreng",
+  "kategori": "B",
+  "halaman_pdf": 76,
+  "foto": "assets/buku_foto/bf_064.jpg",
+  "kb": 69
+ },
+ {
+  "kode": "bf_065",
+  "nama": "B.25 Ikan Belut Goreng",
+  "kategori": "B",
+  "halaman_pdf": 77,
+  "foto": "assets/buku_foto/bf_065.jpg",
+  "kb": 44
+ },
+ {
+  "kode": "bf_066",
+  "nama": "B.26 Ikan Belut Goreng Kecil",
+  "kategori": "B",
+  "halaman_pdf": 78,
+  "foto": "assets/buku_foto/bf_066.jpg",
+  "kb": 33
+ },
+ {
+  "kode": "bf_067",
+  "nama": "B.27 Ikan Bilih Goreng",
+  "kategori": "B",
+  "halaman_pdf": 79,
+  "foto": "assets/buku_foto/bf_067.jpg",
+  "kb": 32
+ },
+ {
+  "kode": "bf_068",
+  "nama": "B.28 Ikan Nila / Mujair Goreng",
+  "kategori": "B",
+  "halaman_pdf": 80,
+  "foto": "assets/buku_foto/bf_068.jpg",
+  "kb": 57
+ },
+ {
+  "kode": "bf_069",
+  "nama": "B.29 Ikan Gurame Goreng",
+  "kategori": "B",
+  "halaman_pdf": 81,
+  "foto": "assets/buku_foto/bf_069.jpg",
+  "kb": 63
+ },
+ {
+  "kode": "bf_070",
+  "nama": "B.30 Ikan Tenggiri Goreng",
+  "kategori": "B",
+  "halaman_pdf": 82,
+  "foto": "assets/buku_foto/bf_070.jpg",
+  "kb": 50
+ },
+ {
+  "kode": "bf_071",
+  "nama": "B.31 Ikan Tenggiri Kuah",
+  "kategori": "B",
+  "halaman_pdf": 83,
+  "foto": "assets/buku_foto/bf_071.jpg",
+  "kb": 51
+ },
+ {
+  "kode": "bf_072",
+  "nama": "B.32 Ikan Lele Goreng",
+  "kategori": "B",
+  "halaman_pdf": 84,
+  "foto": "assets/buku_foto/bf_072.jpg",
+  "kb": 54
+ },
+ {
+  "kode": "bf_073",
+  "nama": "B.33 Ikan Tongkol Segar Goreng",
+  "kategori": "B",
+  "halaman_pdf": 85,
+  "foto": "assets/buku_foto/bf_073.jpg",
+  "kb": 44
+ },
+ {
+  "kode": "bf_074",
+  "nama": "B.34 Ikan Pari Segar Goreng",
+  "kategori": "B",
+  "halaman_pdf": 86,
+  "foto": "assets/buku_foto/bf_074.jpg",
+  "kb": 37
+ },
+ {
+  "kode": "bf_075",
+  "nama": "B.35 Cumi Kuah Sero / Panjang",
+  "kategori": "B",
+  "halaman_pdf": 87,
+  "foto": "assets/buku_foto/bf_075.jpg",
+  "kb": 34
+ },
+ {
+  "kode": "bf_076",
+  "nama": "B.36 Cumi Sotong Rebus",
+  "kategori": "B",
+  "halaman_pdf": 88,
+  "foto": "assets/buku_foto/bf_076.jpg",
+  "kb": 33
+ },
+ {
+  "kode": "bf_077",
+  "nama": "B.37 Udang Goreng",
+  "kategori": "B",
+  "halaman_pdf": 89,
+  "foto": "assets/buku_foto/bf_077.jpg",
+  "kb": 43
+ },
+ {
+  "kode": "bf_078",
+  "nama": "B.38 Ikan Baronang Bakar",
+  "kategori": "B",
+  "halaman_pdf": 90,
+  "foto": "assets/buku_foto/bf_078.jpg",
+  "kb": 65
+ },
+ {
+  "kode": "bf_079",
+  "nama": "B.39 Ikan Bawal Goreng",
+  "kategori": "B",
+  "halaman_pdf": 91,
+  "foto": "assets/buku_foto/bf_079.jpg",
+  "kb": 59
+ },
+ {
+  "kode": "bf_080",
+  "nama": "B.40 Ikan Patin Kuah",
+  "kategori": "B",
+  "halaman_pdf": 92,
+  "foto": "assets/buku_foto/bf_080.jpg",
+  "kb": 46
+ },
+ {
+  "kode": "bf_081",
+  "nama": "B.41 Ikan Teri Segar Goreng",
+  "kategori": "B",
+  "halaman_pdf": 93,
+  "foto": "assets/buku_foto/bf_081.jpg",
+  "kb": 50
+ },
+ {
+  "kode": "bf_082",
+  "nama": "B.42 Bandeng Presto",
+  "kategori": "B",
+  "halaman_pdf": 94,
+  "foto": "assets/buku_foto/bf_082.jpg",
+  "kb": 44
+ },
+ {
+  "kode": "bf_083",
+  "nama": "B.43 Ikan Tenggiri Bumbu Kuning",
+  "kategori": "B",
+  "halaman_pdf": 95,
+  "foto": "assets/buku_foto/bf_083.jpg",
+  "kb": 37
+ },
+ {
+  "kode": "bf_084",
+  "nama": "B.44 Cumi Gulai",
+  "kategori": "B",
+  "halaman_pdf": 96,
+  "foto": "assets/buku_foto/bf_084.jpg",
+  "kb": 33
+ },
+ {
+  "kode": "bf_085",
+  "nama": "B.45 Ikan Sarden Kalengan",
+  "kategori": "B",
+  "halaman_pdf": 97,
+  "foto": "assets/buku_foto/bf_085.jpg",
+  "kb": 42
+ },
+ {
+  "kode": "bf_086",
+  "nama": "B.46 Ikan Tongkol Pindang Goreng",
+  "kategori": "B",
+  "halaman_pdf": 98,
+  "foto": "assets/buku_foto/bf_086.jpg",
+  "kb": 43
+ },
+ {
+  "kode": "bf_087",
+  "nama": "B.47 Ikan Tongkol Pindang Balado",
+  "kategori": "B",
+  "halaman_pdf": 99,
+  "foto": "assets/buku_foto/bf_087.jpg",
+  "kb": 33
+ },
+ {
+  "kode": "bf_088",
+  "nama": "B.48 Ikan Asin Japuh Goreng",
+  "kategori": "B",
+  "halaman_pdf": 100,
+  "foto": "assets/buku_foto/bf_088.jpg",
+  "kb": 49
+ },
+ {
+  "kode": "bf_089",
+  "nama": "B.49 Ikan Asin Peda Goreng",
+  "kategori": "B",
+  "halaman_pdf": 101,
+  "foto": "assets/buku_foto/bf_089.jpg",
+  "kb": 62
+ },
+ {
+  "kode": "bf_090",
+  "nama": "B.50 Ikan Teri Padang Goreng",
+  "kategori": "B",
+  "halaman_pdf": 102,
+  "foto": "assets/buku_foto/bf_090.jpg",
+  "kb": 36
+ },
+ {
+  "kode": "bf_091",
+  "nama": "B.51 Ikan Asin Selar Goreng",
+  "kategori": "B",
+  "halaman_pdf": 103,
+  "foto": "assets/buku_foto/bf_091.jpg",
+  "kb": 42
+ },
+ {
+  "kode": "bf_092",
+  "nama": "B.52 Ikan Asin Sepat Goreng",
+  "kategori": "B",
+  "halaman_pdf": 104,
+  "foto": "assets/buku_foto/bf_092.jpg",
+  "kb": 38
+ },
+ {
+  "kode": "bf_093",
+  "nama": "B.53 Ikan Asin Gabus Goreng",
+  "kategori": "B",
+  "halaman_pdf": 105,
+  "foto": "assets/buku_foto/bf_093.jpg",
+  "kb": 37
+ },
+ {
+  "kode": "bf_094",
+  "nama": "B.54 Ikan Asin Pepetek Goreng",
+  "kategori": "B",
+  "halaman_pdf": 106,
+  "foto": "assets/buku_foto/bf_094.jpg",
+  "kb": 39
+ },
+ {
+  "kode": "bf_095",
+  "nama": "B.55 Ikan Asin Teri Goreng",
+  "kategori": "B",
+  "halaman_pdf": 107,
+  "foto": "assets/buku_foto/bf_095.jpg",
+  "kb": 32
+ },
+ {
+  "kode": "bf_096",
+  "nama": "B.56 Ikan Asin Gabus Goreng",
+  "kategori": "B",
+  "halaman_pdf": 108,
+  "foto": "assets/buku_foto/bf_096.jpg",
+  "kb": 30
+ },
+ {
+  "kode": "bf_097",
+  "nama": "B.57 Telur Ceplok Balado",
+  "kategori": "B",
+  "halaman_pdf": 109,
+  "foto": "assets/buku_foto/bf_097.jpg",
+  "kb": 35
+ },
+ {
+  "kode": "bf_098",
+  "nama": "B.58 Telur Dadar",
+  "kategori": "B",
+  "halaman_pdf": 110,
+  "foto": "assets/buku_foto/bf_098.jpg",
+  "kb": 38
+ },
+ {
+  "kode": "bf_099",
+  "nama": "B.59 Telur Rebus Balado",
+  "kategori": "B",
+  "halaman_pdf": 111,
+  "foto": "assets/buku_foto/bf_099.jpg",
+  "kb": 34
+ },
+ {
+  "kode": "bf_100",
+  "nama": "B.60 Telur Puyuh Rebus",
+  "kategori": "B",
+  "halaman_pdf": 112,
+  "foto": "assets/buku_foto/bf_100.jpg",
+  "kb": 27
+ },
+ {
+  "kode": "bf_101",
+  "nama": "B.61 Daging Kornet",
+  "kategori": "B",
+  "halaman_pdf": 113,
+  "foto": "assets/buku_foto/bf_101.jpg",
+  "kb": 28
+ },
+ {
+  "kode": "bf_102",
+  "nama": "B.62 Kikil Gulai",
+  "kategori": "B",
+  "halaman_pdf": 114,
+  "foto": "assets/buku_foto/bf_102.jpg",
+  "kb": 28
+ },
+ {
+  "kode": "bf_103",
+  "nama": "B.63 Tahu Goreng",
+  "kategori": "B",
+  "halaman_pdf": 115,
+  "foto": "assets/buku_foto/bf_103.jpg",
+  "kb": 36
+ },
+ {
+  "kode": "bf_104",
+  "nama": "B.64 Semur Tahu",
+  "kategori": "B",
+  "halaman_pdf": 116,
+  "foto": "assets/buku_foto/bf_104.jpg",
+  "kb": 32
+ },
+ {
+  "kode": "bf_105",
+  "nama": "B.65 Tempe Goreng",
+  "kategori": "B",
+  "halaman_pdf": 117,
+  "foto": "assets/buku_foto/bf_105.jpg",
+  "kb": 33
+ },
+ {
+  "kode": "bf_106",
+  "nama": "B.66 Tempe Orek",
+  "kategori": "B",
+  "halaman_pdf": 118,
+  "foto": "assets/buku_foto/bf_106.jpg",
+  "kb": 28
+ },
+ {
+  "kode": "bf_107",
+  "nama": "B.67 Bubur Kacang Hijau",
+  "kategori": "B",
+  "halaman_pdf": 119,
+  "foto": "assets/buku_foto/bf_107.jpg",
+  "kb": 41
+ },
+ {
+  "kode": "bf_108",
+  "nama": "B.68 Kacang Tanah Goreng",
+  "kategori": "B",
+  "halaman_pdf": 120,
+  "foto": "assets/buku_foto/bf_108.jpg",
+  "kb": 32
+ },
+ {
+  "kode": "bf_109",
+  "nama": "B.69 Kacang Tanah Rebus",
+  "kategori": "B",
+  "halaman_pdf": 121,
+  "foto": "assets/buku_foto/bf_109.jpg",
+  "kb": 37
+ },
+ {
+  "kode": "bf_110",
+  "nama": "B.70 Kacang Merah / Jogo",
+  "kategori": "B",
+  "halaman_pdf": 122,
+  "foto": "assets/buku_foto/bf_110.jpg",
+  "kb": 39
+ },
+ {
+  "kode": "bf_111",
+  "nama": "C.1 Sayur Asem",
+  "kategori": "C",
+  "halaman_pdf": 124,
+  "foto": "assets/buku_foto/bf_111.jpg",
+  "kb": 33
+ },
+ {
+  "kode": "bf_112",
+  "nama": "C.2 Sayur Sop",
+  "kategori": "C",
+  "halaman_pdf": 125,
+  "foto": "assets/buku_foto/bf_112.jpg",
+  "kb": 33
+ },
+ {
+  "kode": "bf_113",
+  "nama": "C.3 Sayur Bayam Bening",
+  "kategori": "C",
+  "halaman_pdf": 126,
+  "foto": "assets/buku_foto/bf_113.jpg",
+  "kb": 38
+ },
+ {
+  "kode": "bf_114",
+  "nama": "C.4 Sayur Lodeh",
+  "kategori": "C",
+  "halaman_pdf": 127,
+  "foto": "assets/buku_foto/bf_114.jpg",
+  "kb": 29
+ },
+ {
+  "kode": "bf_115",
+  "nama": "C.5 Tumis Sawi",
+  "kategori": "C",
+  "halaman_pdf": 128,
+  "foto": "assets/buku_foto/bf_115.jpg",
+  "kb": 36
+ },
+ {
+  "kode": "bf_116",
+  "nama": "C.6 Tumis Kacang Panjang",
+  "kategori": "C",
+  "halaman_pdf": 129,
+  "foto": "assets/buku_foto/bf_116.jpg",
+  "kb": 38
+ },
+ {
+  "kode": "bf_117",
+  "nama": "C.7 Gulai Daun Singkong",
+  "kategori": "C",
+  "halaman_pdf": 130,
+  "foto": "assets/buku_foto/bf_117.jpg",
+  "kb": 38
+ },
+ {
+  "kode": "bf_118",
+  "nama": "C.8 Tumis Kangkung",
+  "kategori": "C",
+  "halaman_pdf": 131,
+  "foto": "assets/buku_foto/bf_118.jpg",
+  "kb": 40
+ },
+ {
+  "kode": "bf_119",
+  "nama": "C.10 Balado Terong",
+  "kategori": "C",
+  "halaman_pdf": 133,
+  "foto": "assets/buku_foto/bf_119.jpg",
+  "kb": 35
+ },
+ {
+  "kode": "bf_120",
+  "nama": "C.11 Urap",
+  "kategori": "C",
+  "halaman_pdf": 134,
+  "foto": "assets/buku_foto/bf_120.jpg",
+  "kb": 41
+ },
+ {
+  "kode": "bf_121",
+  "nama": "C.12 Oyong Rebus",
+  "kategori": "C",
+  "halaman_pdf": 135,
+  "foto": "assets/buku_foto/bf_121.jpg",
+  "kb": 31
+ },
+ {
+  "kode": "bf_122",
+  "nama": "C.13 Wortel Rebus",
+  "kategori": "C",
+  "halaman_pdf": 136,
+  "foto": "assets/buku_foto/bf_122.jpg",
+  "kb": 33
+ },
+ {
+  "kode": "bf_123",
+  "nama": "C.14 Buncis Rebus",
+  "kategori": "C",
+  "halaman_pdf": 137,
+  "foto": "assets/buku_foto/bf_123.jpg",
+  "kb": 32
+ },
+ {
+  "kode": "bf_124",
+  "nama": "C.15 Nangka Muda Rebus",
+  "kategori": "C",
+  "halaman_pdf": 138,
+  "foto": "assets/buku_foto/bf_124.jpg",
+  "kb": 33
+ },
+ {
+  "kode": "bf_125",
+  "nama": "C.16 Labu Siam Rebus",
+  "kategori": "C",
+  "halaman_pdf": 139,
+  "foto": "assets/buku_foto/bf_125.jpg",
+  "kb": 28
+ },
+ {
+  "kode": "bf_126",
+  "nama": "C.17 Ketimun Mentah",
+  "kategori": "C",
+  "halaman_pdf": 140,
+  "foto": "assets/buku_foto/bf_126.jpg",
+  "kb": 35
+ },
+ {
+  "kode": "bf_127",
+  "nama": "C.18 Terong Ungu Bulat",
+  "kategori": "C",
+  "halaman_pdf": 141,
+  "foto": "assets/buku_foto/bf_127.jpg",
+  "kb": 30
+ },
+ {
+  "kode": "bf_128",
+  "nama": "C.19 Terong Bulat Hijau",
+  "kategori": "C",
+  "halaman_pdf": 142,
+  "foto": "assets/buku_foto/bf_128.jpg",
+  "kb": 40
+ },
+ {
+  "kode": "bf_129",
+  "nama": "D.1 Alpukat",
+  "kategori": "D",
+  "halaman_pdf": 144,
+  "foto": "assets/buku_foto/bf_129.jpg",
+  "kb": 46
+ },
+ {
+  "kode": "bf_130",
+  "nama": "D.2 Anggur",
+  "kategori": "D",
+  "halaman_pdf": 145,
+  "foto": "assets/buku_foto/bf_130.jpg",
+  "kb": 26
+ },
+ {
+  "kode": "bf_131",
+  "nama": "D.4 Apel Fuji",
+  "kategori": "D",
+  "halaman_pdf": 147,
+  "foto": "assets/buku_foto/bf_131.jpg",
+  "kb": 44
+ },
+ {
+  "kode": "bf_132",
+  "nama": "D.5 Apel Merah Royal Gala",
+  "kategori": "D",
+  "halaman_pdf": 148,
+  "foto": "assets/buku_foto/bf_132.jpg",
+  "kb": 39
+ },
+ {
+  "kode": "bf_133",
+  "nama": "D.6 Bengkuang",
+  "kategori": "D",
+  "halaman_pdf": 149,
+  "foto": "assets/buku_foto/bf_133.jpg",
+  "kb": 36
+ },
+ {
+  "kode": "bf_134",
+  "nama": "D.7 Belimbing",
+  "kategori": "D",
+  "halaman_pdf": 150,
+  "foto": "assets/buku_foto/bf_134.jpg",
+  "kb": 36
+ },
+ {
+  "kode": "bf_135",
+  "nama": "D.8 Duku",
+  "kategori": "D",
+  "halaman_pdf": 151,
+  "foto": "assets/buku_foto/bf_135.jpg",
+  "kb": 29
+ },
+ {
+  "kode": "bf_136",
+  "nama": "D.9 Durian Lokal",
+  "kategori": "D",
+  "halaman_pdf": 152,
+  "foto": "assets/buku_foto/bf_136.jpg",
+  "kb": 41
+ },
+ {
+  "kode": "bf_137",
+  "nama": "D.10 Durian Montong",
+  "kategori": "D",
+  "halaman_pdf": 153,
+  "foto": "assets/buku_foto/bf_137.jpg",
+  "kb": 28
+ },
+ {
+  "kode": "bf_138",
+  "nama": "D.11 Jambu Air",
+  "kategori": "D",
+  "halaman_pdf": 154,
+  "foto": "assets/buku_foto/bf_138.jpg",
+  "kb": 32
+ },
+ {
+  "kode": "bf_139",
+  "nama": "D.12 Jambu Biji",
+  "kategori": "D",
+  "halaman_pdf": 155,
+  "foto": "assets/buku_foto/bf_139.jpg",
+  "kb": 35
+ },
+ {
+  "kode": "bf_140",
+  "nama": "D.13 Jeruk Bali",
+  "kategori": "D",
+  "halaman_pdf": 156,
+  "foto": "assets/buku_foto/bf_140.jpg",
+  "kb": 30
+ },
+ {
+  "kode": "bf_141",
+  "nama": "D.14 Jeruk Mandarin",
+  "kategori": "D",
+  "halaman_pdf": 157,
+  "foto": "assets/buku_foto/bf_141.jpg",
+  "kb": 37
+ },
+ {
+  "kode": "bf_142",
+  "nama": "D.15 Jeruk Medan",
+  "kategori": "D",
+  "halaman_pdf": 158,
+  "foto": "assets/buku_foto/bf_142.jpg",
+  "kb": 41
+ },
+ {
+  "kode": "bf_143",
+  "nama": "D.16 Kedongdong",
+  "kategori": "D",
+  "halaman_pdf": 159,
+  "foto": "assets/buku_foto/bf_143.jpg",
+  "kb": 34
+ },
+ {
+  "kode": "bf_144",
+  "nama": "D.17 Klengkeng",
+  "kategori": "D",
+  "halaman_pdf": 160,
+  "foto": "assets/buku_foto/bf_144.jpg",
+  "kb": 32
+ },
+ {
+  "kode": "bf_145",
+  "nama": "D.18 Kiwi",
+  "kategori": "D",
+  "halaman_pdf": 161,
+  "foto": "assets/buku_foto/bf_145.jpg",
+  "kb": 35
+ },
+ {
+  "kode": "bf_146",
+  "nama": "D.19 Mangga Gedong",
+  "kategori": "D",
+  "halaman_pdf": 162,
+  "foto": "assets/buku_foto/bf_146.jpg",
+  "kb": 34
+ },
+ {
+  "kode": "bf_147",
+  "nama": "D.20 Mangga Harum Manis",
+  "kategori": "D",
+  "halaman_pdf": 163,
+  "foto": "assets/buku_foto/bf_147.jpg",
+  "kb": 38
+ },
+ {
+  "kode": "bf_148",
+  "nama": "D.21 Mangga Indramayu",
+  "kategori": "D",
+  "halaman_pdf": 164,
+  "foto": "assets/buku_foto/bf_148.jpg",
+  "kb": 44
+ },
+ {
+  "kode": "bf_149",
+  "nama": "D.22 Melon",
+  "kategori": "D",
+  "halaman_pdf": 165,
+  "foto": "assets/buku_foto/bf_149.jpg",
+  "kb": 30
+ },
+ {
+  "kode": "bf_150",
+  "nama": "D.23 Naga",
+  "kategori": "D",
+  "halaman_pdf": 166,
+  "foto": "assets/buku_foto/bf_150.jpg",
+  "kb": 39
+ },
+ {
+  "kode": "bf_151",
+  "nama": "D.24 Nanas",
+  "kategori": "D",
+  "halaman_pdf": 167,
+  "foto": "assets/buku_foto/bf_151.jpg",
+  "kb": 34
+ },
+ {
+  "kode": "bf_152",
+  "nama": "D.25 Nangka",
+  "kategori": "D",
+  "halaman_pdf": 168,
+  "foto": "assets/buku_foto/bf_152.jpg",
+  "kb": 29
+ },
+ {
+  "kode": "bf_153",
+  "nama": "D.26 Pear",
+  "kategori": "D",
+  "halaman_pdf": 169,
+  "foto": "assets/buku_foto/bf_153.jpg",
+  "kb": 43
+ },
+ {
+  "kode": "bf_154",
+  "nama": "D.27 Pepaya",
+  "kategori": "D",
+  "halaman_pdf": 170,
+  "foto": "assets/buku_foto/bf_154.jpg",
+  "kb": 38
+ },
+ {
+  "kode": "bf_155",
+  "nama": "D.30 Pisang",
+  "kategori": "D",
+  "halaman_pdf": 171,
+  "foto": "assets/buku_foto/bf_155.jpg",
+  "kb": 37
+ },
+ {
+  "kode": "bf_156",
+  "nama": "D.31 Pisang Emas",
+  "kategori": "D",
+  "halaman_pdf": 172,
+  "foto": "assets/buku_foto/bf_156.jpg",
+  "kb": 28
+ },
+ {
+  "kode": "bf_157",
+  "nama": "D.32 Pisang Raja Sereh",
+  "kategori": "D",
+  "halaman_pdf": 173,
+  "foto": "assets/buku_foto/bf_157.jpg",
+  "kb": 34
+ },
+ {
+  "kode": "bf_158",
+  "nama": "D.33 Pisang Raja Bulu",
+  "kategori": "D",
+  "halaman_pdf": 174,
+  "foto": "assets/buku_foto/bf_158.jpg",
+  "kb": 34
+ },
+ {
+  "kode": "bf_159",
+  "nama": "D.34 Manggis",
+  "kategori": "D",
+  "halaman_pdf": 175,
+  "foto": "assets/buku_foto/bf_159.jpg",
+  "kb": 37
+ },
+ {
+  "kode": "bf_160",
+  "nama": "D.35 Rambutan",
+  "kategori": "D",
+  "halaman_pdf": 176,
+  "foto": "assets/buku_foto/bf_160.jpg",
+  "kb": 43
+ },
+ {
+  "kode": "bf_161",
+  "nama": "D.36 Salak",
+  "kategori": "D",
+  "halaman_pdf": 177,
+  "foto": "assets/buku_foto/bf_161.jpg",
+  "kb": 41
+ },
+ {
+  "kode": "bf_162",
+  "nama": "D.37 Sawo",
+  "kategori": "D",
+  "halaman_pdf": 178,
+  "foto": "assets/buku_foto/bf_162.jpg",
+  "kb": 29
+ },
+ {
+  "kode": "bf_163",
+  "nama": "D.38 Semangka",
+  "kategori": "D",
+  "halaman_pdf": 179,
+  "foto": "assets/buku_foto/bf_163.jpg",
+  "kb": 30
+ },
+ {
+  "kode": "bf_164",
+  "nama": "D.39 Sirsak",
+  "kategori": "D",
+  "halaman_pdf": 180,
+  "foto": "assets/buku_foto/bf_164.jpg",
+  "kb": 30
+ },
+ {
+  "kode": "bf_165",
+  "nama": "D.40 strawberry",
+  "kategori": "D",
+  "halaman_pdf": 181,
+  "foto": "assets/buku_foto/bf_165.jpg",
+  "kb": 35
+ },
+ {
+  "kode": "bf_166",
+  "nama": "E.1 Kue Apem",
+  "kategori": "E",
+  "halaman_pdf": 183,
+  "foto": "assets/buku_foto/bf_166.jpg",
+  "kb": 31
+ },
+ {
+  "kode": "bf_167",
+  "nama": "E.2 Bacang",
+  "kategori": "E",
+  "halaman_pdf": 184,
+  "foto": "assets/buku_foto/bf_167.jpg",
+  "kb": 37
+ },
+ {
+  "kode": "bf_168",
+  "nama": "E.3 Bakpia",
+  "kategori": "E",
+  "halaman_pdf": 185,
+  "foto": "assets/buku_foto/bf_168.jpg",
+  "kb": 26
+ },
+ {
+  "kode": "bf_169",
+  "nama": "E.4 Bakwan Sayuran",
+  "kategori": "E",
+  "halaman_pdf": 186,
+  "foto": "assets/buku_foto/bf_169.jpg",
+  "kb": 36
+ },
+ {
+  "kode": "bf_170",
+  "nama": "E.5 Barongko",
+  "kategori": "E",
+  "halaman_pdf": 187,
+  "foto": "assets/buku_foto/bf_170.jpg",
+  "kb": 29
+ },
+ {
+  "kode": "bf_171",
+  "nama": "E.6 Kue Bika Ambon",
+  "kategori": "E",
+  "halaman_pdf": 188,
+  "foto": "assets/buku_foto/bf_171.jpg",
+  "kb": 28
+ },
+ {
+  "kode": "bf_172",
+  "nama": "E.7 Bolu Keju",
+  "kategori": "E",
+  "halaman_pdf": 189,
+  "foto": "assets/buku_foto/bf_172.jpg",
+  "kb": 26
+ },
+ {
+  "kode": "bf_173",
+  "nama": "E.8 Bolu Kukus",
+  "kategori": "E",
+  "halaman_pdf": 190,
+  "foto": "assets/buku_foto/bf_173.jpg",
+  "kb": 24
+ },
+ {
+  "kode": "bf_174",
+  "nama": "E.9 Brownies",
+  "kategori": "E",
+  "halaman_pdf": 191,
+  "foto": "assets/buku_foto/bf_174.jpg",
+  "kb": 26
+ },
+ {
+  "kode": "bf_175",
+  "nama": "E.10 Bubur Sumsum",
+  "kategori": "E",
+  "halaman_pdf": 192,
+  "foto": "assets/buku_foto/bf_175.jpg",
+  "kb": 37
+ },
+ {
+  "kode": "bf_176",
+  "nama": "E.11 Kue Carabikang",
+  "kategori": "E",
+  "halaman_pdf": 193,
+  "foto": "assets/buku_foto/bf_176.jpg",
+  "kb": 29
+ },
+ {
+  "kode": "bf_177",
+  "nama": "E.12 Rempeyek Kacang",
+  "kategori": "E",
+  "halaman_pdf": 194,
+  "foto": "assets/buku_foto/bf_177.jpg",
+  "kb": 43
+ },
+ {
+  "kode": "bf_178",
+  "nama": "E.13 Dadar Gulung",
+  "kategori": "E",
+  "halaman_pdf": 195,
+  "foto": "assets/buku_foto/bf_178.jpg",
+  "kb": 27
+ },
+ {
+  "kode": "bf_179",
+  "nama": "E.14 Donat",
+  "kategori": "E",
+  "halaman_pdf": 196,
+  "foto": "assets/buku_foto/bf_179.jpg",
+  "kb": 30
+ },
+ {
+  "kode": "bf_180",
+  "nama": "E.15 Getuk",
+  "kategori": "E",
+  "halaman_pdf": 197,
+  "foto": "assets/buku_foto/bf_180.jpg",
+  "kb": 24
+ },
+ {
+  "kode": "bf_181",
+  "nama": "E.16 Kue Ali",
+  "kategori": "E",
+  "halaman_pdf": 198,
+  "foto": "assets/buku_foto/bf_181.jpg",
+  "kb": 25
+ },
+ {
+  "kode": "bf_182",
+  "nama": "E.17 Kroket Kentang",
+  "kategori": "E",
+  "halaman_pdf": 199,
+  "foto": "assets/buku_foto/bf_182.jpg",
+  "kb": 35
+ },
+ {
+  "kode": "bf_183",
+  "nama": "E.18 Kue Lapis Pepe",
+  "kategori": "E",
+  "halaman_pdf": 200,
+  "foto": "assets/buku_foto/bf_183.jpg",
+  "kb": 26
+ },
+ {
+  "kode": "bf_184",
+  "nama": "E.19 Kue Lumpur",
+  "kategori": "E",
+  "halaman_pdf": 201,
+  "foto": "assets/buku_foto/bf_184.jpg",
+  "kb": 23
+ },
+ {
+  "kode": "bf_185",
+  "nama": "E.20 Kue Mangkok",
+  "kategori": "E",
+  "halaman_pdf": 202,
+  "foto": "assets/buku_foto/bf_185.jpg",
+  "kb": 25
+ },
+ {
+  "kode": "bf_186",
+  "nama": "E.21 Kue Lapis Legit",
+  "kategori": "E",
+  "halaman_pdf": 203,
+  "foto": "assets/buku_foto/bf_186.jpg",
+  "kb": 29
+ },
+ {
+  "kode": "bf_187",
+  "nama": "E.22 Lapis Surabaya",
+  "kategori": "E",
+  "halaman_pdf": 204,
+  "foto": "assets/buku_foto/bf_187.jpg",
+  "kb": 27
+ },
+ {
+  "kode": "bf_188",
+  "nama": "E.23 Lemper Ayam",
+  "kategori": "E",
+  "halaman_pdf": 205,
+  "foto": "assets/buku_foto/bf_188.jpg",
+  "kb": 25
+ },
+ {
+  "kode": "bf_189",
+  "nama": "E.24 Lontong Isi",
+  "kategori": "E",
+  "halaman_pdf": 206,
+  "foto": "assets/buku_foto/bf_189.jpg",
+  "kb": 41
+ },
+ {
+  "kode": "bf_190",
+  "nama": "E.25 Lumpia",
+  "kategori": "E",
+  "halaman_pdf": 207,
+  "foto": "assets/buku_foto/bf_190.jpg",
+  "kb": 33
+ },
+ {
+  "kode": "bf_191",
+  "nama": "E.26 Pempek",
+  "kategori": "E",
+  "halaman_pdf": 208,
+  "foto": "assets/buku_foto/bf_191.jpg",
+  "kb": 39
+ },
+ {
+  "kode": "bf_192",
+  "nama": "E.27 Papais Pisang (Naga Sari)",
+  "kategori": "E",
+  "halaman_pdf": 209,
+  "foto": "assets/buku_foto/bf_192.jpg",
+  "kb": 29
+ },
+ {
+  "kode": "bf_193",
+  "nama": "E.28 Pastel",
+  "kategori": "E",
+  "halaman_pdf": 210,
+  "foto": "assets/buku_foto/bf_193.jpg",
+  "kb": 30
+ },
+ {
+  "kode": "bf_194",
+  "nama": "E.29 Pisang Goreng",
+  "kategori": "E",
+  "halaman_pdf": 211,
+  "foto": "assets/buku_foto/bf_194.jpg",
+  "kb": 37
+ },
+ {
+  "kode": "bf_195",
+  "nama": "E.30 Pisang Ijo",
+  "kategori": "E",
+  "halaman_pdf": 212,
+  "foto": "assets/buku_foto/bf_195.jpg",
+  "kb": 36
+ },
+ {
+  "kode": "bf_196",
+  "nama": "E.31 Pisang Molen",
+  "kategori": "E",
+  "halaman_pdf": 213,
+  "foto": "assets/buku_foto/bf_196.jpg",
+  "kb": 32
+ },
+ {
+  "kode": "bf_197",
+  "nama": "E.32 Kue Putri Ayu",
+  "kategori": "E",
+  "halaman_pdf": 214,
+  "foto": "assets/buku_foto/bf_197.jpg",
+  "kb": 27
+ },
+ {
+  "kode": "bf_198",
+  "nama": "E.33 Roti Goreng",
+  "kategori": "E",
+  "halaman_pdf": 215,
+  "foto": "assets/buku_foto/bf_198.jpg",
+  "kb": 33
+ },
+ {
+  "kode": "bf_199",
+  "nama": "E.34 Roti Manis Coklat",
+  "kategori": "E",
+  "halaman_pdf": 216,
+  "foto": "assets/buku_foto/bf_199.jpg",
+  "kb": 33
+ },
+ {
+  "kode": "bf_200",
+  "nama": "E.35 Risoles Sayuran",
+  "kategori": "E",
+  "halaman_pdf": 217,
+  "foto": "assets/buku_foto/bf_200.jpg",
+  "kb": 33
+ },
+ {
+  "kode": "bf_201",
+  "nama": "E.36 Singkong Goreng",
+  "kategori": "E",
+  "halaman_pdf": 218,
+  "foto": "assets/buku_foto/bf_201.jpg",
+  "kb": 28
+ },
+ {
+  "kode": "bf_202",
+  "nama": "E.37 Tahu Isi Daging",
+  "kategori": "E",
+  "halaman_pdf": 219,
+  "foto": "assets/buku_foto/bf_202.jpg",
+  "kb": 36
+ },
+ {
+  "kode": "bf_203",
+  "nama": "E.38 Tahu Isi Sayur",
+  "kategori": "E",
+  "halaman_pdf": 220,
+  "foto": "assets/buku_foto/bf_203.jpg",
+  "kb": 35
+ },
+ {
+  "kode": "bf_204",
+  "nama": "E.39 Kerupuk Udang",
+  "kategori": "E",
+  "halaman_pdf": 221,
+  "foto": "assets/buku_foto/bf_204.jpg",
+  "kb": 41
+ },
+ {
+  "kode": "bf_205",
+  "nama": "E.40 Tempe Goreng Tepung",
+  "kategori": "E",
+  "halaman_pdf": 222,
+  "foto": "assets/buku_foto/bf_205.jpg",
+  "kb": 33
+ },
+ {
+  "kode": "bf_206",
+  "nama": "E.41 Ubi Goreng",
+  "kategori": "E",
+  "halaman_pdf": 223,
+  "foto": "assets/buku_foto/bf_206.jpg",
+  "kb": 36
+ },
+ {
+  "kode": "bf_207",
+  "nama": "E.42 Gemblong",
+  "kategori": "E",
+  "halaman_pdf": 224,
+  "foto": "assets/buku_foto/bf_207.jpg",
+  "kb": 26
+ },
+ {
+  "kode": "bf_208",
+  "nama": "E.43 Kremes Singkong",
+  "kategori": "E",
+  "halaman_pdf": 225,
+  "foto": "assets/buku_foto/bf_208.jpg",
+  "kb": 38
+ },
+ {
+  "kode": "bf_209",
+  "nama": "E.44 Martabak Keju",
+  "kategori": "E",
+  "halaman_pdf": 226,
+  "foto": "assets/buku_foto/bf_209.jpg",
+  "kb": 34
+ },
+ {
+  "kode": "bf_210",
+  "nama": "E.45 Martabak Coklat Kacang",
+  "kategori": "E",
+  "halaman_pdf": 227,
+  "foto": "assets/buku_foto/bf_210.jpg",
+  "kb": 34
+ },
+ {
+  "kode": "bf_211",
+  "nama": "E.46 Martabak Telur",
+  "kategori": "E",
+  "halaman_pdf": 228,
+  "foto": "assets/buku_foto/bf_211.jpg",
+  "kb": 31
+ },
+ {
+  "kode": "bf_212",
+  "nama": "E.47 Keripik Talas",
+  "kategori": "E",
+  "halaman_pdf": 229,
+  "foto": "assets/buku_foto/bf_212.jpg",
+  "kb": 35
+ },
+ {
+  "kode": "bf_213",
+  "nama": "E.48 Keripik Pisang",
+  "kategori": "E",
+  "halaman_pdf": 230,
+  "foto": "assets/buku_foto/bf_213.jpg",
+  "kb": 36
+ },
+ {
+  "kode": "bf_214",
+  "nama": "E.49 Keripik Singkong",
+  "kategori": "E",
+  "halaman_pdf": 231,
+  "foto": "assets/buku_foto/bf_214.jpg",
+  "kb": 40
+ },
+ {
+  "kode": "bf_215",
+  "nama": "F.1 Ayam Goreng Tepung Dada Atas",
+  "kategori": "F",
+  "halaman_pdf": 233,
+  "foto": "assets/buku_foto/bf_215.jpg",
+  "kb": 42
+ },
+ {
+  "kode": "bf_216",
+  "nama": "F.2 Ayam Goreng Tepung Dada Mentok",
+  "kategori": "F",
+  "halaman_pdf": 234,
+  "foto": "assets/buku_foto/bf_216.jpg",
+  "kb": 40
+ },
+ {
+  "kode": "bf_217",
+  "nama": "F.3 Ayam Goreng Tepung Paha Atas",
+  "kategori": "F",
+  "halaman_pdf": 235,
+  "foto": "assets/buku_foto/bf_217.jpg",
+  "kb": 39
+ },
+ {
+  "kode": "bf_218",
+  "nama": "F.4 Ayam Goreng Tepung Paha Bawah",
+  "kategori": "F",
+  "halaman_pdf": 236,
+  "foto": "assets/buku_foto/bf_218.jpg",
+  "kb": 40
+ },
+ {
+  "kode": "bf_219",
+  "nama": "F.5 Ayam Goreng Tepung Sayap",
+  "kategori": "F",
+  "halaman_pdf": 237,
+  "foto": "assets/buku_foto/bf_219.jpg",
+  "kb": 38
+ },
+ {
+  "kode": "bf_220",
+  "nama": "F.6 Bihun Goreng",
+  "kategori": "F",
+  "halaman_pdf": 238,
+  "foto": "assets/buku_foto/bf_220.jpg",
+  "kb": 45
+ },
+ {
+  "kode": "bf_221",
+  "nama": "F.7 Bubur Ayam",
+  "kategori": "F",
+  "halaman_pdf": 239,
+  "foto": "assets/buku_foto/bf_221.jpg",
+  "kb": 44
+ },
+ {
+  "kode": "bf_222",
+  "nama": "F.8 Gado-Gado",
+  "kategori": "F",
+  "halaman_pdf": 240,
+  "foto": "assets/buku_foto/bf_222.jpg",
+  "kb": 43
+ },
+ {
+  "kode": "bf_223",
+  "nama": "F.9 Ketupat Tahu/ Doclang",
+  "kategori": "F",
+  "halaman_pdf": 241,
+  "foto": "assets/buku_foto/bf_223.jpg",
+  "kb": 49
+ },
+ {
+  "kode": "bf_224",
+  "nama": "F.10 Kuetiaw Goreng",
+  "kategori": "F",
+  "halaman_pdf": 242,
+  "foto": "assets/buku_foto/bf_224.jpg",
+  "kb": 42
+ },
+ {
+  "kode": "bf_225",
+  "nama": "F.11 Lontong Sayur",
+  "kategori": "F",
+  "halaman_pdf": 243,
+  "foto": "assets/buku_foto/bf_225.jpg",
+  "kb": 46
+ },
+ {
+  "kode": "bf_226",
+  "nama": "F.12 Mie Bakso",
+  "kategori": "F",
+  "halaman_pdf": 244,
+  "foto": "assets/buku_foto/bf_226.jpg",
+  "kb": 47
+ },
+ {
+  "kode": "bf_227",
+  "nama": "F.13 Mie Goreng",
+  "kategori": "F",
+  "halaman_pdf": 245,
+  "foto": "assets/buku_foto/bf_227.jpg",
+  "kb": 43
+ },
+ {
+  "kode": "bf_228",
+  "nama": "F.14 Pizza Iris Kotak Tipis",
+  "kategori": "F",
+  "halaman_pdf": 246,
+  "foto": "assets/buku_foto/bf_228.jpg",
+  "kb": 36
+ },
+ {
+  "kode": "bf_229",
+  "nama": "F.15 Pizza",
+  "kategori": "F",
+  "halaman_pdf": 247,
+  "foto": "assets/buku_foto/bf_229.jpg",
+  "kb": 34
+ },
+ {
+  "kode": "bf_230",
+  "nama": "F.16 Sate Ayam",
+  "kategori": "F",
+  "halaman_pdf": 248,
+  "foto": "assets/buku_foto/bf_230.jpg",
+  "kb": 51
+ },
+ {
+  "kode": "bf_231",
+  "nama": "F.17 Sate Kambing",
+  "kategori": "F",
+  "halaman_pdf": 249,
+  "foto": "assets/buku_foto/bf_231.jpg",
+  "kb": 41
+ },
+ {
+  "kode": "bf_232",
+  "nama": "F.18 Sate Padang",
+  "kategori": "F",
+  "halaman_pdf": 250,
+  "foto": "assets/buku_foto/bf_232.jpg",
+  "kb": 39
+ },
+ {
+  "kode": "bf_233",
+  "nama": "F.19 Siomay",
+  "kategori": "F",
+  "halaman_pdf": 251,
+  "foto": "assets/buku_foto/bf_233.jpg",
+  "kb": 38
+ },
+ {
+  "kode": "bf_234",
+  "nama": "F.20 Soto Mie",
+  "kategori": "F",
+  "halaman_pdf": 252,
+  "foto": "assets/buku_foto/bf_234.jpg",
+  "kb": 47
+ },
+ {
+  "kode": "bf_235",
+  "nama": "G1. Teh Manis",
+  "kategori": "G",
+  "halaman_pdf": 254,
+  "foto": "assets/buku_foto/bf_235.jpg",
+  "kb": 34
+ },
+ {
+  "kode": "bf_236",
+  "nama": "G2. Kopi",
+  "kategori": "G",
+  "halaman_pdf": 255,
+  "foto": "assets/buku_foto/bf_236.jpg",
+  "kb": 35
+ },
+ {
+  "kode": "bf_237",
+  "nama": "G3. Kopi Susu",
+  "kategori": "G",
+  "halaman_pdf": 256,
+  "foto": "assets/buku_foto/bf_237.jpg",
+  "kb": 41
+ },
+ {
+  "kode": "bf_238",
+  "nama": "G4. Susu",
+  "kategori": "G",
+  "halaman_pdf": 257,
+  "foto": "assets/buku_foto/bf_238.jpg",
+  "kb": 30
+ },
+ {
+  "kode": "bf_239",
+  "nama": "G5. Kopi 1 Cangkir",
+  "kategori": "G",
+  "halaman_pdf": 258,
+  "foto": "assets/buku_foto/bf_239.jpg",
+  "kb": 35
+ },
+ {
+  "kode": "bf_240",
+  "nama": "G6. Susu Cair (Kemasan)",
+  "kategori": "G",
+  "halaman_pdf": 259,
+  "foto": "assets/buku_foto/bf_240.jpg",
+  "kb": 47
+ }
+]
