@@ -264,7 +264,7 @@ _logo_b64 = (
 hero(
     "Master TKPI — Food Composition &amp; Menu Management System",
     "Penjelajah database bahan makanan (TKPI): cari bahan, lihat kandungan zat gizi "
-    "per 100 g bagian dapat dimakan (BDD), kelola master menu, dan bandingkan beberapa "
+    "per 100 g bagian dapat dimakan (BDD), kelola menu Subdep Gizi, dan bandingkan beberapa "
     "bahan sekaligus.",
     [f"{len(tkpi):,} bahan", "10 zat gizi", "Nilai per 100 g + BDD"],
     logo_b64=_logo_b64,
@@ -279,7 +279,7 @@ if cari.strip():
 st.caption(f"Menemukan **{len(hasil):,} bahan**" + (f" untuk kata '{cari.strip()}'" if cari.strip() else " — ketik kata kunci untuk mencari"))
 
 tab_cari, tab_tambah, tab_menu, tab_tabel, tab_banding = st.tabs(
-    ["🔍 Cari & Detail", "➕ Tambah Bahan", "🍱 Master Menu",
+    ["🔍 Cari & Detail", "➕ Tambah Bahan", "🍱 Menu Subdep Gizi",
      "📋 Tabel Lengkap", "⚖️ Bandingkan Bahan"]
 )
 
@@ -489,13 +489,13 @@ with tab_menu:
 
             df_lib_sekarang = ms.baca_menu(MENU_FILE)
             nama_ada = set(ms.daftar_nama_menu(df_lib_sekarang))
-            if st.button("💾 Simpan menu ke Master Menu", type="primary", key="mm_simpan",
+            if st.button("💾 Simpan menu ke Menu Subdep Gizi", type="primary", key="mm_simpan",
                          width="stretch"):
                 nama_m = mm_nama.strip()
                 if not nama_m:
                     st.error("❌ Nama menu wajib diisi.")
                 elif nama_m.lower() in {n.lower() for n in nama_ada}:
-                    st.error(f"❌ Menu '{nama_m}' sudah ada di Master Menu.")
+                    st.error(f"❌ Menu '{nama_m}' sudah ada di Menu Subdep Gizi.")
                 else:
                     rows = [{"bahan": d["bahan"], "bb": d["bb"], "zat": d["zat"]}
                             for d in draft]
@@ -512,7 +512,7 @@ with tab_menu:
                         unsafe_allow_html=True)
 
     with kol_kanan:
-        seksi("Master Menu tersimpan")
+        seksi("Menu Subdep Gizi tersimpan")
         df_lib = ms.baca_menu(MENU_FILE)
         nama_lib = ms.daftar_nama_menu(df_lib)
         if not nama_lib:

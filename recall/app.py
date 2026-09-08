@@ -846,7 +846,7 @@ with tab_input:
     if nama_menu_lib:
         st.markdown(
             '<div style="margin:14px 0 4px;font-size:15px;font-weight:800;color:#0A2E6E;'
-            'padding-left:10px;border-left:4px solid #1565C0">⚡ Pilih dari Master Menu</div>',
+            'padding-left:10px;border-left:4px solid #1565C0">⚡ Pilih dari Menu Subdep Gizi</div>',
             unsafe_allow_html=True,
         )
         q1, q2 = st.columns([3.4, 1.2])
