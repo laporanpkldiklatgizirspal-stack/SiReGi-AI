@@ -1185,9 +1185,16 @@ with tab_bf:
 # TAB 2 — RINGKASAN FILE
 # ============================================================
 with tab_file:
-    items_v = items_file
-    ident_v = identitas_file
-    recall_v = recall
+    # Data recall aktif di tab ini (file contoh bawaan, bisa diganti file upload
+    # dan bisa dihapus barisnya oleh pengguna)
+    if "file_items" not in st.session_state:
+        st.session_state.file_items = items_file.copy()
+        st.session_state.file_ident = dict(identitas_file)
+        st.session_state.file_masalah = list(recall.get("masalah", []))
+        st.session_state.file_sumber = "file contoh bawaan"
+    items_v = st.session_state.file_items
+    ident_v = st.session_state.file_ident
+    masalah_v = st.session_state.file_masalah
     with st.expander("📂 Buka file recall pasien lain (opsional)"):
         up_p = st.file_uploader(
             "Pilih file hasil simpan / file MASTER TKPI + Recall pasien",
@@ -1196,9 +1203,10 @@ with tab_file:
         if up_p is not None:
             dp = muat_data(up_p.getvalue())
             if dp.get("ok"):
-                items_v = dp["recall"]["data"]
-                ident_v = dp["recall"]["identitas"]
-                recall_v = dp["recall"]
+                st.session_state.file_items = dp["recall"]["data"]
+                st.session_state.file_ident = dp["recall"]["identitas"]
+                st.session_state.file_masalah = list(dp["recall"].get("masalah", []))
+                st.session_state.file_sumber = up_p.name
                 st.success(f"✅ Memakai file: {up_p.name}")
             else:
                 st.error(f"❌ {dp.get('pesan')}")
@@ -1221,7 +1229,7 @@ with tab_file:
             st.markdown('<div class="info-blok">ℹ️ Identitas pasien di file ini masih kosong '
                         '(file contoh) — isi di sheet RECALL untuk pasien sungguhan.</div>',
                         unsafe_allow_html=True)
-        for pesan in recall_v["masalah"]:
+        for pesan in masalah_v:
             st.warning(f"⚠️ {pesan}")
 
         total_f = pr.total_asupan(items_v)
@@ -1244,11 +1252,47 @@ with tab_file:
             fig.update_layout(barmode="group", title="Zat gizi per waktu makan (file)",
                               legend=dict(orientation="h", y=1.1, x=0))
             st.plotly_chart(gaya_fig(fig), width="stretch")
-        with st.expander("📋 Rincian bahan (dari file)"):
-            df_r = items_v.copy()
-            for g in pr.NAMA_GIZI:
-                df_r[g] = df_r[g].round(2)
-            st.dataframe(df_r, width="stretch", height=300)
+        with st.expander("📋 Rincian bahan (dari file) — bisa hapus baris"):
+            if items_v.empty:
+                st.info("Belum ada data bahan. Buka file recall pasien di atas, "
+                        "atau isi recall lewat tab Input Recall lalu simpan sebagai Excel.")
+            else:
+                df_r = items_v.copy()
+                for g in pr.NAMA_GIZI:
+                    if g in df_r.columns:
+                        df_r[g] = df_r[g].round(2)
+                pilih = df_r.copy()
+                pilih.insert(0, "☑️ Hapus?", False)
+                kolom_tetap = [c for c in pilih.columns if c != "☑️ Hapus?"]
+                diedit = st.data_editor(
+                    pilih, width="stretch", height=280, hide_index=True,
+                    disabled=kolom_tetap, key="editor_hapus_file",
+                )
+                h1, h2, h3 = st.columns([1.3, 1.3, 2.6])
+                with h1:
+                    if st.button("🗑️ Hapus baris terpilih", key="btn_hapus_file",
+                                 type="primary", width="stretch"):
+                        n = int(diedit["☑️ Hapus?"].sum()) if diedit is not None else 0
+                        if n > 0:
+                            sisa = diedit[~diedit["☑️ Hapus?"]].drop(
+                                columns=["☑️ Hapus?"]
+                            ).reset_index(drop=True)
+                            st.session_state.file_items = sisa
+                            st.session_state.pop("editor_hapus_file", None)
+                            st.success(f"✅ {n} baris dihapus.")
+                            st.rerun()
+                        else:
+                            st.warning("Centang dulu baris yang mau dihapus (kolom ☑️ Hapus?).")
+                with h2:
+                    if st.button("🧹 Hapus semua data", key="btn_hapus_semua_file",
+                                 width="stretch"):
+                        st.session_state.file_items = items_v.iloc[0:0].copy()
+                        st.session_state.pop("editor_hapus_file", None)
+                        st.rerun()
+                with h3:
+                    st.caption(f"Sumber: {st.session_state.file_sumber} · "
+                               f"{len(items_v)} baris tampil — hapus hanya mengubah "
+                               "tampilan sesi ini, file asli tidak diubah.")
 
 # ============================================================
 # TAB 4 — EXPORT
@@ -1264,6 +1308,7 @@ with tab_expor:
         st.markdown('<div class="info-blok">🍽️ Belum ada input recall di tab 1.</div>',
                     unsafe_allow_html=True)
     if not items_file.empty:
+        total_f = pr.total_asupan(items_file)
         buf_f = io.BytesIO()
         with pd.ExcelWriter(buf_f, engine="openpyxl") as penulis:
             pd.DataFrame({"Keterangan": list(identitas_file.keys()),
