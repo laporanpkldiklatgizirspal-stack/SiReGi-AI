@@ -115,19 +115,26 @@ CSS = f"""
   .hero .lencana {{ display: inline-block; background: rgba(255,255,255,.16);
     border: 1px solid rgba(255,255,255,.32); border-radius: 20px; padding: 5px 14px;
     font-size: 12.5px; font-weight: 600; margin: 14px 5px 0 0; backdrop-filter: blur(2px); }}
-  .hero .fitur-row {{ display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }}
-  .hero .fitur {{ display: inline-flex; align-items: center; gap: 8px;
-    background: rgba(255,255,255,.13); border: 1px solid rgba(255,255,255,.30);
-    border-radius: 999px; padding: 7px 15px 7px 9px; margin-top: 12px;
-    backdrop-filter: blur(3px); box-shadow: 0 2px 8px rgba(10,46,110,.12); }}
-  .hero .fitur .f-ico {{ font-size: 17px; line-height: 1; }}
-  .hero .fitur .f-lab {{ font-size: 12px; font-weight: 700; letter-spacing: .2px;
-    color: rgba(255,255,255,.96); text-transform: uppercase; white-space: nowrap; }}
+  .hero .orn {{ position: absolute; opacity: .13; pointer-events: none;
+    user-select: none; filter: drop-shadow(0 6px 14px rgba(10,46,110,.25)); }}
+  .hero .konten {{ position: relative; z-index: 1; }}
+  .hero .fitur-row {{ display: flex; justify-content: center; gap: 12px;
+    flex-wrap: wrap; margin-top: 20px; }}
+  .hero .fitur {{ display: flex; flex-direction: column; align-items: center;
+    gap: 5px; min-width: 148px; background: rgba(255,255,255,.14);
+    border: 1px solid rgba(255,255,255,.34); border-radius: 16px;
+    padding: 13px 18px 11px; backdrop-filter: blur(4px);
+    box-shadow: 0 4px 14px rgba(10,46,110,.16); }}
+  .hero .fitur .f-ico {{ font-size: 25px; line-height: 1.15; }}
+  .hero .fitur .f-lab {{ font-size: 11px; font-weight: 800; letter-spacing: .4px;
+    color: rgba(255,255,255,.97); text-transform: uppercase; white-space: nowrap; }}
   @media (max-width: 640px) {{
     .hero {{ padding: 28px 18px 24px; }}
     .hero h1 {{ font-size: 23px; }}
     .hero .hero-org {{ font-size: 11px; letter-spacing: .8px; padding: 5px 12px; }}
     .hero .hero-logo {{ height: 84px; }}
+    .hero .orn {{ display: none; }}
+    .hero .fitur {{ min-width: 132px; }}
   }}
 
   /* ---------- Judul seksi ---------- */
@@ -217,7 +224,8 @@ st.markdown(CSS, unsafe_allow_html=True)
 # ------------------------------------------------------------------
 def hero(judul: str, sub: str = "", lencana: list[str] | None = None,
          logo_b64: str = "", org: str = "",
-         fitur: list[tuple[str, str]] | None = None):
+         fitur: list[tuple[str, str]] | None = None,
+         ornamen: list[str] | None = None):
     logo = (
         '<img class="hero-logo" src="data:image/png;base64,' + logo_b64
         + '" alt="RSPAL dr. Ramelan"/>'
@@ -225,6 +233,20 @@ def hero(judul: str, sub: str = "", lencana: list[str] | None = None,
     org_html = f'<div class="hero-org">{org}</div>' if org else ""
     sub_html = f"<p>{sub}</p>" if sub else ""
     chip = "".join(f'<span class="lencana">{b}</span>' for b in (lencana or []))
+    # Ornamen emoji makanan samar di latar hero (posisi pojok kiri/kanan)
+    pos_orn = [
+        ("3.5%", "9%", "-14deg", "72px"), ("8%", "46%", "9deg", "52px"),
+        ("2.5%", "84%", "-8deg", "60px"), ("94%", "6%", "11deg", "64px"),
+        ("89%", "42%", "-11deg", "46px"), ("93%", "84%", "7deg", "66px"),
+    ]
+    if ornamen:
+        orn_html = "".join(
+            f'<span class="orn" style="left:{l};top:{t};'
+            f'transform:rotate({r});font-size:{s}">{e}</span>'
+            for e, (l, t, r, s) in zip(ornamen, pos_orn)
+        )
+    else:
+        orn_html = ""
     if fitur:
         tile = "".join(
             f'<span class="fitur"><span class="f-ico">{ik}</span>'
@@ -235,7 +257,9 @@ def hero(judul: str, sub: str = "", lencana: list[str] | None = None,
     else:
         isi_bawah = chip
     st.markdown(
-        f'<div class="hero">{logo}<h1>{judul}</h1>{org_html}{sub_html}{isi_bawah}</div>',
+        f'<div class="hero">{orn_html}'
+        f'<div class="konten">{logo}<h1>{judul}</h1>{org_html}{sub_html}{isi_bawah}</div>'
+        f'</div>',
         unsafe_allow_html=True,
     )
 
@@ -452,6 +476,7 @@ hero(
         ("⚡", "Energi &amp; Kebutuhan"),
         ("📤", "Export Excel/PDF"),
     ],
+    ornamen=["🍎", "🥦", "🥛", "🍚", "🐟", "🥗"],
 )
 
 # ------------------------------------------------------------------
