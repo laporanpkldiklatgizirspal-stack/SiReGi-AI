@@ -608,5 +608,28 @@ with tab_banding:
                     'padding:12px 14px;font-size:13px;color:#5F7A93">Pilih minimal 2 bahan '
                     'dari daftar di atas untuk melihat perbandingan.</div>', unsafe_allow_html=True)
 
+# ============ SIMPAN / UNDUH DATABASE (format master) ============
+seksi("💾 Simpan / unduh database")
+db1, db2, db3 = st.columns([1, 1, 2.4])
+with db1:
+    st.download_button(
+        "📥 Database TKPI + Recall",
+        data=FILE_BAWAAN.read_bytes(),
+        file_name="MASTER_TKPI__Recall.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        key="dl_db_master",
+    )
+with db2:
+    st.download_button(
+        "📥 Menu Subdep Gizi",
+        data=MENU_FILE.read_bytes(),
+        file_name="MENU_GIZI.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        key="dl_menu_subdep",
+    )
+with db3:
+    st.caption("Salinan file database untuk arsip / dibagikan — bisa dibuka di Excel "
+               "atau di-upload ke aplikasi Recall.")
+
 st.markdown('<div class="footer-app">Master TKPI · data diproses lokal · '
             'dibuat oleh Sub Departemen Gizi RSPAL dr. Ramelan · © 2026</div>', unsafe_allow_html=True)

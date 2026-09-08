@@ -1020,65 +1020,49 @@ with tab_input:
                            "tersebut; TOTAL = seluruh input recall.")
 
         seksi("5️⃣ Simpan / unduh")
-        s1, s2 = st.columns(2)
-        with s1:
-            ident_hasil = {
-                "Nama": inp_nama.strip(), "NO RM": inp_rm.strip(),
-                "Usia": f"{inp_umur:g}", "Diagnosa": "",
-                "Jenis Diet": inp_diet.strip(), "Konsistensi": inp_kons.strip(),
-            }
-            buf = reng.tulis_file_recall(tkpi, ident_hasil, daftar_item)
-            st.download_button(
-                "📥 Simpan sebagai Excel (format master)",
-                data=buf.getvalue(),
-                file_name=f"Recall_{inp_nama.strip() or 'pasien'}.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                key="btn_simpan_excel",
-            )
-            st.caption("Format sama dengan MASTER TKPI + Recall — bisa dibuka di Excel "
-                       "atau di-upload kembali ke aplikasi ini.")
-        with s2:
-            if st.button("🖨️ Laporan PDF", key="btn_pdf_input"):
-                try:
-                    from reportlab.lib.pagesizes import A4
-                    from reportlab.lib.units import mm
-                    from reportlab.lib import colors
-                    from reportlab.pdfgen import canvas
-                    pdf_buf = io.BytesIO()
-                    c = canvas.Canvas(pdf_buf, pagesize=A4)
-                    tinggi = A4[1]
-                    y = tinggi - 22 * mm
-                    c.setFont("Helvetica-Bold", 14)
-                    c.setFillColor(colors.HexColor(BIRU_TUA[1:]))
-                    c.drawString(20 * mm, y, "Laporan Recall Gizi")
-                    y -= 7 * mm
-                    c.setFont("Helvetica", 10)
-                    c.setFillColor(colors.black)
-                    for lab, val in [("Nama", inp_nama), ("Usia", inp_umur), ("BB", inp_bb),
-                                     ("TB", inp_tb), ("Jenis Diet", inp_diet)]:
-                        if str(val).strip():
-                            c.drawString(20 * mm, y, f"{lab}: {val}")
-                            y -= 5 * mm
-                    y -= 2 * mm
-                    c.setFont("Helvetica-Bold", 11)
-                    c.drawString(20 * mm, y, "Asupan vs Kebutuhan:")
-                    y -= 5.5 * mm
-                    c.setFont("Helvetica", 10)
-                    for g in ["Energi", "Protein", "Lemak", "KH"]:
-                        sat = "kkal" if g == "Energi" else "g"
-                        tgt = kbt[g]
-                        pct = tot[g] / tgt * 100 if tgt > 0 else 0
-                        c.drawString(22 * mm, y, f"{g:<9} {fmt(tot[g])} {sat}   "
-                                                 f"(kebutuhan {fmt(tgt, 0)} {sat}, {pct:.0f}%)")
+        if st.button("🖨️ Laporan PDF", key="btn_pdf_input"):
+            try:
+                from reportlab.lib.pagesizes import A4
+                from reportlab.lib.units import mm
+                from reportlab.lib import colors
+                from reportlab.pdfgen import canvas
+                pdf_buf = io.BytesIO()
+                c = canvas.Canvas(pdf_buf, pagesize=A4)
+                tinggi = A4[1]
+                y = tinggi - 22 * mm
+                c.setFont("Helvetica-Bold", 14)
+                c.setFillColor(colors.HexColor(BIRU_TUA[1:]))
+                c.drawString(20 * mm, y, "Laporan Recall Gizi")
+                y -= 7 * mm
+                c.setFont("Helvetica", 10)
+                c.setFillColor(colors.black)
+                for lab, val in [("Nama", inp_nama), ("Usia", inp_umur), ("BB", inp_bb),
+                                 ("TB", inp_tb), ("Jenis Diet", inp_diet)]:
+                    if str(val).strip():
+                        c.drawString(20 * mm, y, f"{lab}: {val}")
                         y -= 5 * mm
-                    c.showPage()
-                    c.save()
-                    pdf_buf.seek(0)
-                    st.download_button("📥 Download PDF", pdf_buf.getvalue(),
-                                       file_name="laporan_recall_input.pdf",
-                                       mime="application/pdf", key="btn_dl_pdf_input")
-                except Exception as exc:  # noqa: BLE001
-                    st.error(f"Gagal membuat PDF: {exc}")
+                y -= 2 * mm
+                c.setFont("Helvetica-Bold", 11)
+                c.drawString(20 * mm, y, "Asupan vs Kebutuhan:")
+                y -= 5.5 * mm
+                c.setFont("Helvetica", 10)
+                for g in ["Energi", "Protein", "Lemak", "KH"]:
+                    sat = "kkal" if g == "Energi" else "g"
+                    tgt = kbt[g]
+                    pct = tot[g] / tgt * 100 if tgt > 0 else 0
+                    c.drawString(22 * mm, y, f"{g:<9} {fmt(tot[g])} {sat}   "
+                                             f"(kebutuhan {fmt(tgt, 0)} {sat}, {pct:.0f}%)")
+                    y -= 5 * mm
+                c.showPage()
+                c.save()
+                pdf_buf.seek(0)
+                st.download_button("📥 Download PDF", pdf_buf.getvalue(),
+                                   file_name="laporan_recall_input.pdf",
+                                   mime="application/pdf", key="btn_dl_pdf_input")
+            except Exception as exc:  # noqa: BLE001
+                st.error(f"Gagal membuat PDF: {exc}")
+        st.caption("Pengelolaan & simpan database (format master) dilakukan lewat "
+                   "aplikasi Master TKPI.")
     else:
         st.markdown(
             '<div class="info-blok">Belum ada makanan. Cari bahan → pilih dari daftar → '
