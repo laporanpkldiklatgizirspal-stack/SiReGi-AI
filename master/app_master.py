@@ -9,6 +9,7 @@ Jalankan:  streamlit run app_master.py --server.port 8502
 
 from __future__ import annotations
 
+import base64
 import io
 import os
 from pathlib import Path
@@ -66,19 +67,46 @@ CSS = f"""
     padding: 7px 10px; margin-top: 6px; font-size: 12px; color: {TEKS};
   }}
   .hero {{
-    background: linear-gradient(120deg, {BIRU_TUA} 0%, {BIRU} 55%, #2E7EDB 100%);
-    border-radius: 20px; padding: 24px 28px; color: #fff; position: relative;
-    overflow: hidden; box-shadow: 0 10px 30px rgba(10,46,110,.25); margin-bottom: 6px;
+    background:
+      radial-gradient(900px 400px at 88% -25%, rgba(255,255,255,.16) 0%, rgba(255,255,255,0) 60%),
+      linear-gradient(120deg, {BIRU_TUA} 0%, {BIRU} 52%, #2E7EDB 100%);
+    border-radius: 26px; padding: 36px 38px 32px; color: #fff; position: relative;
+    overflow: hidden; box-shadow: 0 14px 38px rgba(10,46,110,.28);
+    margin-bottom: 10px; text-align: center;
   }}
   .hero:after {{
-    content: ""; position: absolute; right: -60px; top: -60px; width: 240px; height: 240px;
-    background: radial-gradient(circle, rgba(255,255,255,.14) 0%, transparent 70%);
+    content: ""; position: absolute; right: -80px; top: -80px; width: 300px; height: 300px;
+    background: radial-gradient(circle, rgba(255,255,255,.15) 0%, transparent 70%);
   }}
-  .hero h1 {{ font-size: 26px; font-weight: 800; margin: 0 0 4px; }}
-  .hero p {{ margin: 0; font-size: 13.5px; opacity: .92; max-width: 640px; line-height: 1.55; }}
+  .hero:before {{
+    content: "📖"; position: absolute; left: 24px; bottom: -10px; font-size: 120px;
+    opacity: .10; transform: rotate(-10deg);
+  }}
+  .hero .hero-logo {{
+    height: 112px; width: auto; margin: 0 auto 16px; display: block;
+    filter: drop-shadow(0 8px 16px rgba(10,46,110,.35));
+  }}
+  .hero h1 {{
+    font-size: 32px; font-weight: 800; margin: 0 auto 12px; letter-spacing: .1px;
+    line-height: 1.25; max-width: 880px; text-wrap: balance;
+  }}
+  .hero .hero-org {{
+    display: inline-block; font-size: 15px; font-weight: 700; letter-spacing: 1.4px;
+    text-transform: uppercase; color: rgba(255,255,255,.95);
+    background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.32);
+    padding: 6px 18px; border-radius: 999px; margin-bottom: 16px;
+    backdrop-filter: blur(3px);
+  }}
+  .hero p {{ margin: 0 auto; font-size: 15px; opacity: .93; max-width: 680px; line-height: 1.62; }}
   .hero .lencana {{ display: inline-block; background: rgba(255,255,255,.16);
-    border: 1px solid rgba(255,255,255,.28); border-radius: 20px; padding: 3px 11px;
-    font-size: 11px; margin: 8px 6px 0 0; }}
+    border: 1px solid rgba(255,255,255,.32); border-radius: 20px; padding: 5px 14px;
+    font-size: 12.5px; font-weight: 600; margin: 14px 5px 0 0; backdrop-filter: blur(2px); }}
+  @media (max-width: 640px) {{
+    .hero {{ padding: 28px 18px 24px; }}
+    .hero h1 {{ font-size: 23px; }}
+    .hero .hero-org {{ font-size: 11px; letter-spacing: .8px; padding: 5px 12px; }}
+    .hero .hero-logo {{ height: 84px; }}
+  }}
   .seksi {{
     font-size: 15px; font-weight: 800; color: {BIRU_TUA}; margin: 18px 0 10px;
     padding-left: 10px; border-left: 4px solid {BIRU};
@@ -135,10 +163,18 @@ if not gl.tampilkan_login():
 gl.tombol_keluar(sidebar=True)
 
 
-def hero(judul: str, sub: str, lencana: list[str] | None = None):
+def hero(judul: str, sub: str, lencana: list[str] | None = None,
+         logo_b64: str = "", org: str = ""):
+    logo = (
+        '<img class="hero-logo" src="data:image/png;base64,' + logo_b64
+        + '" alt="RSPAL dr. Ramelan"/>'
+    ) if logo_b64 else ""
+    org_html = f'<div class="hero-org">{org}</div>' if org else ""
     chip = "".join(f'<span class="lencana">{b}</span>' for b in (lencana or []))
-    st.markdown(f'<div class="hero"><h1>{judul}</h1><p>{sub}</p>{chip}</div>',
-                unsafe_allow_html=True)
+    st.markdown(
+        f'<div class="hero">{logo}<h1>{judul}</h1>{org_html}<p>{sub}</p>{chip}</div>',
+        unsafe_allow_html=True,
+    )
 
 
 def seksi(judul: str):
@@ -220,11 +256,19 @@ if st.session_state.pending_bahan:
     tkpi = pd.concat([tkpi, pd.DataFrame(st.session_state.pending_bahan)], ignore_index=True)
 
 # ---------------- HERO ----------------
+_LOGO_RSPAL = Path(__file__).parent / "assets" / "logo_rspal.png"
+_logo_b64 = (
+    base64.b64encode(_LOGO_RSPAL.read_bytes()).decode()
+    if _LOGO_RSPAL.exists() else ""
+)
 hero(
-    "📖 Master TKPI",
+    "Master TKPI — Food Composition &amp; Menu Management System",
     "Penjelajah database bahan makanan (TKPI): cari bahan, lihat kandungan zat gizi "
-    "per 100 g bagian dapat dimakan (BDD), dan bandingkan beberapa bahan sekaligus.",
+    "per 100 g bagian dapat dimakan (BDD), kelola master menu, dan bandingkan beberapa "
+    "bahan sekaligus.",
     [f"{len(tkpi):,} bahan", "10 zat gizi", "Nilai per 100 g + BDD"],
+    logo_b64=_logo_b64,
+    org="Sub Departemen Gizi RSPAL dr. Ramelan",
 )
 
 cari = st.text_input("🔎 Cari nama bahan (mis. ayam, beras, tempe, wortel)", key="cari_master")
