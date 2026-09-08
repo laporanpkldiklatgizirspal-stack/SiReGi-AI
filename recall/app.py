@@ -1264,4 +1264,4 @@ with tab_expor:
                            file_name="rincian_recall.csv", mime="text/csv", key="dl_csv_file")
 
 st.markdown('<div class="footer-app">Aplikasi Recall Gizi · data diproses lokal di perangkat '
-            'Anda · dibuat untuk Subdep Gizi</div>', unsafe_allow_html=True)
+            'Anda · dibuat untuk Subdep Gizi · © 2026</div>', unsafe_allow_html=True)

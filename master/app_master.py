@@ -609,4 +609,4 @@ with tab_banding:
                     'dari daftar di atas untuk melihat perbandingan.</div>', unsafe_allow_html=True)
 
 st.markdown('<div class="footer-app">Master TKPI · data diproses lokal · '
-            'dibuat untuk Subdep Gizi</div>', unsafe_allow_html=True)
+            'dibuat untuk Subdep Gizi · © 2026</div>', unsafe_allow_html=True)
