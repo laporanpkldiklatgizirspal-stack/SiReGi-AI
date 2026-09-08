@@ -500,9 +500,9 @@ with alat_kanan:
         st.session_state.menu_log = []
         st.rerun()
 
-tab_ai, tab_input, tab_bf, tab_file, tab_expor = st.tabs(
+tab_ai, tab_input, tab_bf, tab_expor = st.tabs(
     ["🤖 Ketik Makanan (AI)", "🍽️ Input Recall", "📷 Buku Foto Porsi",
-     "📊 Ringkasan File", "📤 Export"]
+     "📤 Export"]
 )
 
 # ============================================================
@@ -1263,119 +1263,6 @@ with tab_bf:
                                 st.success(f"✅ {item_bf['nama']} — {bahan_bf} "
                                            f"{gram_bf:g} g ditambahkan ke recall.")
                                 st.rerun()
-
-# ============================================================
-# TAB 2 — RINGKASAN FILE
-# ============================================================
-with tab_file:
-    # Data recall aktif di tab ini (file contoh bawaan, bisa diganti file upload
-    # dan bisa dihapus barisnya oleh pengguna)
-    if "file_items" not in st.session_state:
-        st.session_state.file_items = items_file.copy()
-        st.session_state.file_ident = dict(identitas_file)
-        st.session_state.file_masalah = list(recall.get("masalah", []))
-        st.session_state.file_sumber = "file contoh bawaan"
-    items_v = st.session_state.file_items
-    ident_v = st.session_state.file_ident
-    masalah_v = st.session_state.file_masalah
-    with st.expander("📂 Buka file recall pasien lain (opsional)"):
-        up_p = st.file_uploader(
-            "Pilih file hasil simpan / file MASTER TKPI + Recall pasien",
-            type=["xlsx", "xls"], key="up_pasien",
-        )
-        if up_p is not None:
-            dp = muat_data(up_p.getvalue())
-            if dp.get("ok"):
-                st.session_state.file_items = dp["recall"]["data"]
-                st.session_state.file_ident = dp["recall"]["identitas"]
-                st.session_state.file_masalah = list(dp["recall"].get("masalah", []))
-                st.session_state.file_sumber = up_p.name
-                st.success(f"✅ Memakai file: {up_p.name}")
-            else:
-                st.error(f"❌ {dp.get('pesan')}")
-
-    if items_v.empty:
-        st.warning("Sheet RECALL belum berisi data makanan.")
-    else:
-        ada_nama = any(str(ident_v.get(k, "")).strip() for k in ("Nama", "NO RM"))
-        if ada_nama:
-            seksi("Identitas pasien (dari file)")
-            baris_kpi([
-                dict(ikon="👤", label="Nama", nilai=f'<small style="font-size:15px">{ident_v.get("Nama") or "-"}</small>', aksen=BIRU),
-                dict(ikon="🪪", label="No RM", nilai=f'<small style="font-size:15px">{ident_v.get("NO RM") or "-"}</small>', aksen=BIRU_MUDA),
-                dict(ikon="🎂", label="Usia", nilai=f'<small style="font-size:15px">{ident_v.get("Usia") or "-"}</small>', aksen=BIRU_MUDA),
-                dict(ikon="🏥", label="Diagnosa", nilai=f'<small style="font-size:15px">{ident_v.get("Diagnosa") or "-"}</small>', aksen=BIRU_MUDA),
-                dict(ikon="🥗", label="Jenis Diet", nilai=f'<small style="font-size:15px">{ident_v.get("Jenis Diet") or "-"}</small>', aksen=BIRU_MUDA),
-                dict(ikon="🍚", label="Konsistensi", nilai=f'<small style="font-size:15px">{ident_v.get("Konsistensi") or "-"}</small>', aksen=BIRU_MUDA),
-            ])
-        else:
-            st.markdown('<div class="info-blok">ℹ️ Identitas pasien di file ini masih kosong '
-                        '(file contoh) — isi di sheet RECALL untuk pasien sungguhan.</div>',
-                        unsafe_allow_html=True)
-        for pesan in masalah_v:
-            st.warning(f"⚠️ {pesan}")
-
-        total_f = pr.total_asupan(items_v)
-        seksi("Total asupan (dari file)")
-        baris_kpi([
-            dict(ikon="⚡", label="Energi", nilai=f'{fmt(total_f["Energi"])} <small>kkal</small>', aksen=BIRU),
-            dict(ikon="🥩", label="Protein", nilai=f'{fmt(total_f["Protein"])} <small>g</small>', aksen=BIRU_MUDA),
-            dict(ikon="🫒", label="Lemak", nilai=f'{fmt(total_f["Lemak"])} <small>g</small>', aksen=BIRU_MUDA),
-            dict(ikon="🌾", label="Karbohidrat", nilai=f'{fmt(total_f["KH"])} <small>g</small>', aksen=BIRU_MUDA),
-        ])
-
-        per_waktu = pr.rekap_per_waktu(items_v)
-        if not per_waktu.empty:
-            import plotly.graph_objects as go
-            fig = go.Figure()
-            warna_trace = [BIRU_TUA, BIRU, BIRU_MUDA, "#90CAF9", "#64B5F6"]
-            for i, gizi in enumerate(["Energi", "Protein", "Lemak", "KH"]):
-                fig.add_trace(go.Bar(name=gizi, x=per_waktu["Waktu"], y=per_waktu[gizi],
-                                     marker_color=warna_trace[i % len(warna_trace)]))
-            fig.update_layout(barmode="group", title="Zat gizi per waktu makan (file)",
-                              legend=dict(orientation="h", y=1.1, x=0))
-            st.plotly_chart(gaya_fig(fig), width="stretch")
-        with st.expander("📋 Rincian bahan (dari file) — bisa hapus baris"):
-            if items_v.empty:
-                st.info("Belum ada data bahan. Buka file recall pasien di atas, "
-                        "atau isi recall lewat tab Input Recall lalu simpan sebagai Excel.")
-            else:
-                df_r = items_v.copy()
-                for g in pr.NAMA_GIZI:
-                    if g in df_r.columns:
-                        df_r[g] = df_r[g].round(2)
-                pilih = df_r.copy()
-                pilih.insert(0, "☑️ Hapus?", False)
-                kolom_tetap = [c for c in pilih.columns if c != "☑️ Hapus?"]
-                diedit = st.data_editor(
-                    pilih, width="stretch", height=280, hide_index=True,
-                    disabled=kolom_tetap, key="editor_hapus_file",
-                )
-                h1, h2, h3 = st.columns([1.3, 1.3, 2.6])
-                with h1:
-                    if st.button("🗑️ Hapus baris terpilih", key="btn_hapus_file",
-                                 type="primary", width="stretch"):
-                        n = int(diedit["☑️ Hapus?"].sum()) if diedit is not None else 0
-                        if n > 0:
-                            sisa = diedit[~diedit["☑️ Hapus?"]].drop(
-                                columns=["☑️ Hapus?"]
-                            ).reset_index(drop=True)
-                            st.session_state.file_items = sisa
-                            st.session_state.pop("editor_hapus_file", None)
-                            st.success(f"✅ {n} baris dihapus.")
-                            st.rerun()
-                        else:
-                            st.warning("Centang dulu baris yang mau dihapus (kolom ☑️ Hapus?).")
-                with h2:
-                    if st.button("🧹 Hapus semua data", key="btn_hapus_semua_file",
-                                 width="stretch"):
-                        st.session_state.file_items = items_v.iloc[0:0].copy()
-                        st.session_state.pop("editor_hapus_file", None)
-                        st.rerun()
-                with h3:
-                    st.caption(f"Sumber: {st.session_state.file_sumber} · "
-                               f"{len(items_v)} baris tampil — hapus hanya mengubah "
-                               "tampilan sesi ini, file asli tidak diubah.")
 
 # ============================================================
 # TAB 4 — EXPORT
