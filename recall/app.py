@@ -115,6 +115,14 @@ CSS = f"""
   .hero .lencana {{ display: inline-block; background: rgba(255,255,255,.16);
     border: 1px solid rgba(255,255,255,.32); border-radius: 20px; padding: 5px 14px;
     font-size: 12.5px; font-weight: 600; margin: 14px 5px 0 0; backdrop-filter: blur(2px); }}
+  .hero .fitur-row {{ display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }}
+  .hero .fitur {{ display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(255,255,255,.13); border: 1px solid rgba(255,255,255,.30);
+    border-radius: 999px; padding: 7px 15px 7px 9px; margin-top: 12px;
+    backdrop-filter: blur(3px); box-shadow: 0 2px 8px rgba(10,46,110,.12); }}
+  .hero .fitur .f-ico {{ font-size: 17px; line-height: 1; }}
+  .hero .fitur .f-lab {{ font-size: 12px; font-weight: 700; letter-spacing: .2px;
+    color: rgba(255,255,255,.96); text-transform: uppercase; white-space: nowrap; }}
   @media (max-width: 640px) {{
     .hero {{ padding: 28px 18px 24px; }}
     .hero h1 {{ font-size: 23px; }}
@@ -207,16 +215,27 @@ st.markdown(CSS, unsafe_allow_html=True)
 # ------------------------------------------------------------------
 # Komponen tampilan
 # ------------------------------------------------------------------
-def hero(judul: str, sub: str, lencana: list[str] | None = None,
-         logo_b64: str = "", org: str = ""):
+def hero(judul: str, sub: str = "", lencana: list[str] | None = None,
+         logo_b64: str = "", org: str = "",
+         fitur: list[tuple[str, str]] | None = None):
     logo = (
         '<img class="hero-logo" src="data:image/png;base64,' + logo_b64
         + '" alt="RSPAL dr. Ramelan"/>'
     ) if logo_b64 else ""
     org_html = f'<div class="hero-org">{org}</div>' if org else ""
+    sub_html = f"<p>{sub}</p>" if sub else ""
     chip = "".join(f'<span class="lencana">{b}</span>' for b in (lencana or []))
+    if fitur:
+        tile = "".join(
+            f'<span class="fitur"><span class="f-ico">{ik}</span>'
+            f'<span class="f-lab">{lb}</span></span>'
+            for ik, lb in fitur
+        )
+        isi_bawah = f'<div class="fitur-row">{tile}</div>'
+    else:
+        isi_bawah = chip
     st.markdown(
-        f'<div class="hero">{logo}<h1>{judul}</h1>{org_html}<p>{sub}</p>{chip}</div>',
+        f'<div class="hero">{logo}<h1>{judul}</h1>{org_html}{sub_html}{isi_bawah}</div>',
         unsafe_allow_html=True,
     )
 
@@ -425,11 +444,14 @@ _logo_b64 = (
 )
 hero(
     "Artificial Intelligence-Based Dietary Recall &amp; Nutrition Assessment System",
-    "Input makanan pasien ala NutriSurvey — pilih bahan dari database TKPI, "
-    "isi gram, zat gizi &amp; capaian kebutuhan terhitung otomatis. Data diproses lokal.",
-    ["1.219 bahan TKPI", "10 zat gizi", "Output Excel/PDF"],
     logo_b64=_logo_b64,
     org="Sub Departemen Gizi RSPAL dr. Ramelan",
+    fitur=[
+        ("🍚", f"{len(tkpi):,} Bahan TKPI"),
+        ("🧪", "10 Zat Gizi"),
+        ("⚡", "Energi &amp; Kebutuhan"),
+        ("📤", "Export Excel/PDF"),
+    ],
 )
 
 # ------------------------------------------------------------------
