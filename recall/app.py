@@ -840,52 +840,121 @@ with tab_input:
                 )
                 st.rerun()
 
-    # ---- Ambil dari Master Menu (pilihan cepat) ----
+    # ---- Ambil dari Menu Subdep Gizi (masakan utuh, nilai gizi per 100 g) ----
     df_menu_lib = ms.baca_menu(MENU_FILE)
-    nama_menu_lib = ms.daftar_nama_menu(df_menu_lib)
-    if nama_menu_lib:
+    df_masak = ms.baca_masakan(MENU_FILE)
+    nama_masak = ms.daftar_nama_masakan(df_masak)
+    pilihan_lengkap = list(nama_masak) + ["✍️ Ketik nama makanan/bahan manual…"]
+    if pilihan_lengkap:
         st.markdown(
             '<div style="margin:14px 0 4px;font-size:15px;font-weight:800;color:#0A2E6E;'
             'padding-left:10px;border-left:4px solid #1565C0">⚡ Pilih dari Menu Subdep Gizi</div>',
             unsafe_allow_html=True,
         )
-        q1, q2 = st.columns([3.4, 1.2])
-        with q1:
-            q_menu = st.selectbox("Menu tersimpan", nama_menu_lib, key="q_pilih_menu")
-            baris_q = df_menu_lib[df_menu_lib["Menu"] == q_menu]
-            tot_q = baris_q[pr.NAMA_GIZI].sum(numeric_only=True)
-            st.caption(f"⚡ {fmt(tot_q['Energi'], 0)} kkal · 🥩 {fmt(tot_q['Protein'], 1)} g · "
-                       f"🫒 {fmt(tot_q['Lemak'], 1)} g · 🌾 {fmt(tot_q['KH'], 1)} g "
-                       f"({len(baris_q)} bahan) · dicatat {inp_waktu.lower()} pukul "
-                       f"{inp_jam.strftime('%H.%M')}")
-        with q2:
-            st.markdown("#### ")
-            if st.button("➕ Tambahkan menu", key="q_tambah_menu", width="stretch"):
-                ok, gagal = 0, []
-                for _, rr in baris_q.iterrows():
-                    bb_val = float(rr["BB"]) if pd.notna(rr["BB"]) else 0.0
-                    h = reng.hitung_item(tkpi, str(rr["Bahan"]), bb_val)
-                    if h is not None:
-                        st.session_state.inp_items.append(
-                            {
-                                "waktu": inp_waktu,
-                                "jam": inp_jam.strftime("%H:%M"),
-                                "menu": q_menu,
-                                **h,
-                            }
-                        )
-                        ok += 1
+        nama_masak = sorted(nama_masak, key=lambda s: str(s).lstrip("(+- ").lower())
+        q_menu = st.selectbox("Menu / masakan (nilai gizi per 100 g)",
+                              pilihan_lengkap, key="q_pilih_menu", index=None,
+                              placeholder="Pilih masakan…")
+        if q_menu is None:
+            st.caption("👆 Pilih masakan dari daftar, atau pilih "
+                       "“✍️ Ketik nama makanan/bahan manual…” untuk mengetik sendiri.")
+        elif q_menu == pilihan_lengkap[-1]:
+            man_nama = st.text_input(
+                "Nama bahan / makanan", key="q_man_nama",
+                placeholder="mis. Tahu Fantasi, Nasi 100 g, Ayam goreng…",
+            )
+            q_gram = st.number_input("Berat (g)", min_value=1.0, value=100.0,
+                                     step=5.0, key="q_man_gram")
+            if st.button("➕ Tambahkan manual", key="q_man_tambah",
+                         type="primary", width="stretch"):
+                if not str(man_nama or "").strip():
+                    st.warning("Ketik dulu nama bahan/makanannya.")
+                else:
+                    h = reng.hitung_item(tkpi, str(man_nama).strip(), float(q_gram))
+                    if h is None:
+                        st.error(f"'{man_nama}' tidak ditemukan di database TKPI. "
+                                 "Coba nama lain, atau pilih dari daftar Menu Subdep Gizi.")
                     else:
-                        gagal.append(str(rr["Bahan"]))
-                if gagal:
-                    st.warning("Beberapa bahan tidak ditemukan di TKPI aktif: "
-                               + ", ".join(gagal))
-                st.success(f"✅ {ok} bahan dari menu '{q_menu}' ditambahkan.")
+                        st.session_state.inp_items.append({
+                            "waktu": inp_waktu,
+                            "jam": inp_jam.strftime("%H:%M"),
+                            "menu": str(man_nama).strip(),
+                            **h,
+                        })
+                        st.success(f"✅ '{man_nama}' {q_gram:g} g ditambahkan.")
+                        st.rerun()
+        else:
+            baris_m = df_masak[df_masak["Menu"] == q_menu].iloc[0]
+            berat_std = float(baris_m["Berat (g)"]) if pd.notna(baris_m["Berat (g)"]) else 0.0
+            if berat_std <= 0:
+                berat_std = 100.0
+            g100 = {g: float(baris_m[g]) if pd.notna(baris_m[g]) else 0.0
+                    for g in pr.NAMA_GIZI}
+            komp = df_menu_lib[df_menu_lib["Menu"] == q_menu]
+            st.markdown(
+                '<div style="display:flex;gap:6px;flex-wrap:wrap;margin:2px 0 10px">'
+                f'<span style="background:rgba(21,101,192,.12);border-radius:20px;'
+                f'padding:3px 12px;font-size:12px;color:#0A2E6E">⚡ '
+                f'{fmt(g100["Energi"], 0)} kkal/100 g</span>'
+                f'<span style="background:#EAF1FB;border-radius:20px;padding:3px 12px;'
+                f'font-size:12px;color:#0A2E6E">🥩 {fmt(g100["Protein"], 1)} g protein/100 g</span>'
+                f'<span style="background:#EAF1FB;border-radius:20px;padding:3px 12px;'
+                f'font-size:12px;color:#0A2E6E">🫒 {fmt(g100["Lemak"], 1)} g lemak/100 g</span>'
+                f'<span style="background:#EAF1FB;border-radius:20px;padding:3px 12px;'
+                f'font-size:12px;color:#0A2E6E">🌾 {fmt(g100["KH"], 1)} g KH/100 g</span>'
+                f'<span style="background:#EAF1FB;border-radius:20px;padding:3px 12px;'
+                f'font-size:12px;color:#0A2E6E">🍽️ {len(komp)} bahan penyusun</span></div>',
+                unsafe_allow_html=True,
+            )
+            w1, w2 = st.columns([1.1, 2.6])
+            with w1:
+                q_berat = st.number_input(
+                    "Berat makanan (g)", min_value=1.0,
+                    value=float(berat_std), step=5.0, key="q_berat_porsi",
+                )
+            with w2:
+                st.markdown(
+                    f'<div style="padding-top:26px;font-size:13px;color:#5F7A93">'
+                    f'Porsi standar {berat_std:g} g — sesuaikan dengan berat yang '
+                    f'sungguh dimakan pasien.</div>',
+                    unsafe_allow_html=True,
+                )
+            st.caption(
+                f"Untuk {q_berat:g} g: ⚡ {fmt(g100['Energi'] * q_berat / 100, 0)} kkal · "
+                f"🥩 {fmt(g100['Protein'] * q_berat / 100, 1)} g protein · "
+                f"🫒 {fmt(g100['Lemak'] * q_berat / 100, 1)} g lemak · "
+                f"🌾 {fmt(g100['KH'] * q_berat / 100, 1)} g KH — dicatat "
+                f"{inp_waktu.lower()} pukul {inp_jam.strftime('%H.%M')}"
+            )
+            with st.expander(f"🔍 Lihat komposisi '{q_menu}' ({len(komp)} bahan)"):
+                if not komp.empty:
+                    st.dataframe(
+                        komp[["Bahan", "BB"]].rename(columns={"Bahan": "Bahan penyusun",
+                                                              "BB": "Berat (g)"}),
+                        width="stretch", height=200, hide_index=True,
+                    )
+                else:
+                    st.caption("Komposisi bahan tidak tersedia.")
+            if st.button("➕ Tambahkan menu", key="q_tambah_menu",
+                         type="primary", width="stretch"):
+                zat = {g: round(g100[g] * float(q_berat) / 100.0, 3)
+                       for g in pr.NAMA_GIZI}
+                st.session_state.inp_items.append({
+                    "waktu": inp_waktu,
+                    "jam": inp_jam.strftime("%H:%M"),
+                    "menu": q_menu,
+                    "bahan": q_menu,
+                    "bb": float(q_berat),
+                    "bdd": 100.0,
+                    "zat": zat,
+                })
+                st.success(f"✅ '{q_menu}' ditambahkan — 1 makanan "
+                           f"{q_berat:g} g (≈{fmt(zat['Energi'], 0)} kkal).")
                 st.rerun()
 
     daftar_item = st.session_state.inp_items
     if daftar_item:
-        seksi(f"3️⃣ Daftar makanan masuk — {len(daftar_item)} bahan")
+        seksi(f"3️⃣ Daftar makanan masuk — {len(daftar_item)} item")
         df_item = pd.DataFrame([
             {"Waktu": it["waktu"], "Jam": it.get("jam", ""), "Menu": it["menu"],
              "Bahan": it["bahan"], "BB (g)": it["bb"],

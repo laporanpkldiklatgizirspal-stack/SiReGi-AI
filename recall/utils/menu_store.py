@@ -14,8 +14,10 @@ from openpyxl import Workbook, load_workbook
 from utils import parser_recall as pr
 
 SHEET = "MENU"
+SHEET_MASAKAN = "MASAKAN 100G"
 KOLOM = ["Menu", "Waktu", "Urutan", "Bahan", "BB"] + pr.NAMA_GIZI
 KOLOM_BAHAN = ["Menu", "Waktu", "Urutan", "Bahan", "BB"]
+KOLOM_MASAKAN = ["Menu", "Berat (g)"] + pr.NAMA_GIZI
 
 
 def _buat_file(path: Path):
@@ -41,6 +43,33 @@ def baca_menu(path: Path) -> pd.DataFrame:
 
 
 def daftar_nama_menu(df: pd.DataFrame) -> list[str]:
+    if df.empty or "Menu" not in df.columns:
+        return []
+    return list(df["Menu"].dropna().astype(str).unique())
+
+
+def baca_masakan(path: Path) -> pd.DataFrame:
+    """Nilai gizi PER 100 GRAM tiap masakan (sheet 'MASAKAN 100G').
+
+    Kolom: Menu | Berat (g) | Energi ... Vit. C (per 100 g masakan).
+    File/sheet belum ada -> DataFrame kosong.
+    """
+    if not path.exists():
+        return pd.DataFrame(columns=KOLOM_MASAKAN)
+    try:
+        df = pd.read_excel(path, sheet_name=SHEET_MASAKAN)
+    except Exception:  # noqa: BLE001
+        return pd.DataFrame(columns=KOLOM_MASAKAN)
+    df = df.rename(columns=lambda c: str(c).strip())
+    for k in pr.NAMA_GIZI:
+        if k in df.columns:
+            df[k] = pd.to_numeric(df[k], errors="coerce")
+    if "Berat (g)" in df.columns:
+        df["Berat (g)"] = pd.to_numeric(df["Berat (g)"], errors="coerce")
+    return df
+
+
+def daftar_nama_masakan(df: pd.DataFrame) -> list[str]:
     if df.empty or "Menu" not in df.columns:
         return []
     return list(df["Menu"].dropna().astype(str).unique())
