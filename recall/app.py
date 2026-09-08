@@ -744,16 +744,46 @@ with tab_input:
             inp_kons = st.text_input("Konsistensi", key="inp_kons")
         inp_rm = st.text_input("No RM / diagnosa", key="inp_rm")
 
-    kbt = reng.kebutuhan_pasien(inp_jk, inp_umur, inp_bb, inp_tb, inp_akt)
+    kbt_auto = reng.kebutuhan_pasien(inp_jk, inp_umur, inp_bb, inp_tb, inp_akt)
+    mode_kbt = st.radio(
+        "Cara menentukan kebutuhan gizi",
+        ["⚙️ Otomatis (Harris-Benedict)", "✍️ Isi manual"],
+        horizontal=True, key="mode_kbt",
+    )
+    if mode_kbt.startswith("⚙️"):
+        kbt = kbt_auto
+        sub_e, sub_p, sub_l, sub_k = (
+            "Harris-Benedict × aktivitas",
+            "≈ 15% dari energi", "≈ 25% dari energi", "≈ 60% dari energi",
+        )
+    else:
+        m1, m2, m3, m4 = st.columns(4)
+        with m1:
+            kbt_e = st.number_input("Energi (kkal)", 0.0, 20000.0,
+                                    float(kbt_auto["Energi"]), step=25.0, key="kbt_e")
+        with m2:
+            kbt_p = st.number_input("Protein (g)", 0.0, 2000.0,
+                                    float(kbt_auto["Protein"]), step=1.0, key="kbt_p")
+        with m3:
+            kbt_l = st.number_input("Lemak (g)", 0.0, 2000.0,
+                                    float(kbt_auto["Lemak"]), step=1.0, key="kbt_l")
+        with m4:
+            kbt_k = st.number_input("KH (g)", 0.0, 3000.0,
+                                    float(kbt_auto["KH"]), step=1.0, key="kbt_k")
+        kbt = {"Energi": float(kbt_e), "Protein": float(kbt_p),
+               "Lemak": float(kbt_l), "KH": float(kbt_k)}
+        sub_e = sub_p = sub_l = sub_k = "diisi manual"
+        st.caption("💡 Angka di atas otomatis terisi dari Harris-Benedict — "
+                   "ubah sesuai resep diet / anjuran dokter.")
     baris_kpi([
         dict(ikon="⚡", label="Energi", nilai=f'{fmt(kbt["Energi"], 0)} <small>kkal</small>',
-             sub="Harris-Benedict × aktivitas", aksen=BIRU),
-        dict(ikon="🥩", label="Protein (15%)", nilai=f'{fmt(kbt["Protein"], 0)} <small>g</small>',
-             sub="≈ 15% dari energi", aksen=BIRU_MUDA),
-        dict(ikon="🫒", label="Lemak (25%)", nilai=f'{fmt(kbt["Lemak"], 0)} <small>g</small>',
-             sub="≈ 25% dari energi", aksen=BIRU_MUDA),
-        dict(ikon="🌾", label="KH (60%)", nilai=f'{fmt(kbt["KH"], 0)} <small>g</small>',
-             sub="≈ 60% dari energi", aksen=BIRU_MUDA),
+             sub=sub_e, aksen=BIRU),
+        dict(ikon="🥩", label="Protein", nilai=f'{fmt(kbt["Protein"], 0)} <small>g</small>',
+             sub=sub_p, aksen=BIRU_MUDA),
+        dict(ikon="🫒", label="Lemak", nilai=f'{fmt(kbt["Lemak"], 0)} <small>g</small>',
+             sub=sub_l, aksen=BIRU_MUDA),
+        dict(ikon="🌾", label="KH", nilai=f'{fmt(kbt["KH"], 0)} <small>g</small>',
+             sub=sub_k, aksen=BIRU_MUDA),
     ])
 
     seksi("2️⃣ Masukkan makanan yang dikonsumsi")
