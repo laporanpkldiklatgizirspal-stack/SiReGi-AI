@@ -291,27 +291,44 @@ def parse_label_baris(baris_list):
 
 
 # ---------------------------------------------------------------------------
-# OCR lokal (RapidOCR / ONNX — berjalan offline, tanpa API key)
+# OCR lokal (dua mesin: rapidocr unified utk semua Python >= 3.8,
+# fallback rapidocr-onnxruntime utk Python lama) — tanpa API key
 # ---------------------------------------------------------------------------
 _OCR_ENGINE = None
-_OCR_GAGAL = False
+_OCR_GAGAL = None
+_OCR_TERAKHIR = None
+
+# (nama_package, nama_kelas) — urutan prioritas
+_ENGINE_CANDIDATES = [
+    ("rapidocr", "RapidOCR"),
+    ("rapidocr_onnxruntime", "RapidOCR"),
+]
 
 
 def _dapat_engine():
-    global _OCR_ENGINE, _OCR_GAGAL
-    if _OCR_ENGINE is None and not _OCR_GAGAL:
+    global _OCR_ENGINE, _OCR_GAGAL, _OCR_TERAKHIR
+    if _OCR_ENGINE is not None:
+        return _OCR_ENGINE
+    if _OCR_GAGAL:
+        raise RuntimeError(_OCR_GAGAL)
+    masalah = []
+    for nama_mod, nama_cls in _ENGINE_CANDIDATES:
         try:
-            from rapidocr_onnxruntime import RapidOCR
-
-            _OCR_ENGINE = RapidOCR()
+            mod = __import__(nama_mod, fromlist=[nama_cls])
+            _OCR_ENGINE = getattr(mod, nama_cls)()
+            _OCR_TERAKHIR = nama_mod
+            return _OCR_ENGINE
         except Exception as exc:  # pragma: no cover
-            _OCR_GAGAL = True
-            raise RuntimeError(
-                "Mesin OCR belum terpasang. Install: pip install rapidocr-onnxruntime"
-            ) from exc
-    if _OCR_ENGINE is None:
-        raise RuntimeError("Mesin OCR tidak tersedia")
-    return _OCR_ENGINE
+            masalah.append(f"{nama_mod}: {type(exc).__name__}: {exc}")
+    import sys
+
+    _OCR_GAGAL = (
+        "Mesin OCR tidak bisa dipakai di server ini. "
+        "Pastikan package terpasang: pip install rapidocr"
+        + " | detail: " + " || ".join(masalah)
+        + f" | python {sys.version.split()[0]}"
+    )
+    raise RuntimeError(_OCR_GAGAL)
 
 
 def ocr_ke_baris(byte_gambar: bytes):
@@ -321,7 +338,20 @@ def ocr_ke_baris(byte_gambar: bytes):
 
     img = Image.open(io.BytesIO(byte_gambar)).convert("RGB")
     hasil = _dapat_engine()(np.array(img))
-    items = hasil[0] or []
+
+    # Normalisasi output dua generasi rapidocr:
+    # - rapidocr (unified) >= 3.x -> objek RapidOCROutput (.boxes/.txts/.scores)
+    # - rapidocr_onnxruntime   -> tuple (items, elapse); items = [box, teks, skor]
+    items = []
+    if hasattr(hasil, "txts"):
+        for box, teks, skor in zip(hasil.boxes, hasil.txts, hasil.scores):
+            try:
+                bbox = [list(map(float, p)) for p in box]
+            except (TypeError, ValueError):
+                continue
+            items.append((bbox, str(teks), float(skor)))
+    else:
+        items = list((hasil or ([], None))[0] or [])
 
     # urutkan baris: atas -> bawah, lalu kiri -> kanan (dikelompokkan per baris)
     terurut = []
