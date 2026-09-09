@@ -1,3 +1,15 @@
 streamlit>=1.36
 pillow>=10.0
-rapidocr>=3.9,<4
+# Mesin OCR rapidocr DIKEMAS di folder rapidocr/ (vendor) supaya tidak perlu
+# opencv-python (full) yang butuh libGL/libGL.so.1 di sistem — pakai headless.
+opencv-python-headless>=4.9
+onnxruntime>=1.20
+numpy<3
+pyclipper>=1.2
+shapely>=1.7
+PyYAML
+six
+tqdm
+omegaconf
+colorlog
+requests
