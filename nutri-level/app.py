@@ -222,21 +222,8 @@ def _kunci_gemini():
         return None
 
 
-def tahap_scan():
-    st.markdown('<div class="judul-seksi">📷 Scan Label Informasi Gizi</div>', unsafe_allow_html=True)
-    st.markdown(
-        '<div class="panel">Arahkan kamera ke bagian <b>"Informasi Nilai Gizi"</b> pada kemasan.<br><br>'
-        "Pastikan:<br>• Label terlihat penuh<br>• Tulisan tidak buram<br>"
-        "• Cahaya cukup<br>• Kamera tidak terlalu miring</div>",
-        unsafe_allow_html=True,
-    )
-
-    gambar = st.camera_input("Ambil foto label Informasi Nilai Gizi", key="cam")
-    if gambar is None:
-        st.info("📷 Silakan scan label informasi gizi produk.")
-        return
-
-    byte_img = gambar.getvalue()
+def _proses_foto(byte_img: bytes):
+    """Foto (dari kamera atau unggahan) -> OCR -> pindah ke tahap konfirmasi."""
     st.success("✅ Foto berhasil diambil.")
     with st.spinner("Sedang membaca informasi nilai gizi..."):
         try:
@@ -254,6 +241,40 @@ def tahap_scan():
     st.session_state.scan = hasil
     st.session_state.stage = "confirm"
     st.rerun()
+
+
+def tahap_scan():
+    st.markdown('<div class="judul-seksi">📷 Scan Label Informasi Gizi</div>', unsafe_allow_html=True)
+    st.markdown(
+        '<div class="panel">Arahkan kamera ke bagian <b>"Informasi Nilai Gizi"</b> pada kemasan.<br><br>'
+        "Pastikan:<br>• Label terlihat penuh<br>• Tulisan tidak buram<br>"
+        "• Cahaya cukup<br>• Kamera tidak terlalu miring<br>"
+        '• Kalau kamera sulit fokus: geser pelan mendekat/menjauh (±15–25 cm) '
+        "sampai tulisan tajam, lalu ambil foto</div>",
+        unsafe_allow_html=True,
+    )
+
+    gambar = st.camera_input("Ambil foto label Informasi Nilai Gizi", key="cam")
+    if gambar is not None:
+        _proses_foto(gambar.getvalue())
+        return
+
+    st.info("📷 Silakan scan label informasi gizi produk.")
+
+    # ---- Jalur cadangan: kamera HP asli (fokus/zoom penuh) atau galeri ----
+    st.markdown(
+        '<div class="kartu-info" style="margin-top:14px;">📤 <b>Kamera HP-mu susah fokus?</b> '
+        "Foto dulu pakai aplikasi kamera HP biasa (bisa ketuk layar untuk fokus & zoom), "
+        "lalu pilih fotonya di bawah ini — hasilnya sama saja.</div>",
+        unsafe_allow_html=True,
+    )
+    unggah = st.file_uploader(
+        "Pilih foto label dari kamera HP / galeri",
+        type=["jpg", "jpeg", "png"],
+        key="upl",
+    )
+    if unggah is not None:
+        _proses_foto(unggah.getvalue())
 
 
 # ---------------------------------------------------------------------------
