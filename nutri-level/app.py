@@ -1,514 +1,590 @@
 """
-Nutri Level — Scan label Informasi Nilai Gizi, cek level gula/natrium/lemak.
+GiziLens — Pemindai Label GGL + Tracker GGL Harian.
 
-Alur: kamera -> AI/OCR baca -> konfirmasi hasil (bisa diedit) -> analisis 🟢🟡🔴
+Alur utama:
+📷 Scan label -> 🤖 AI/OCR baca GGL -> 🔎 Konfirmasi hasil (bisa diedit)
+-> 🍽️ Pilih jumlah sajian dikonsumsi -> 📊 Lihat dampak ke total hari ini
+-> ➕ Tambahkan ke GGL Hari Ini -> 💾 SQLite -> 🟢🟡🔴 dashboard ter-update.
+
 Jalankan:  streamlit run app.py
 """
 
 from __future__ import annotations
 
-import base64
-from pathlib import Path
+import datetime as _dt
 
+import pandas as pd
 import streamlit as st
 
-from nutri_core import (
-    NUTRIENTS,
-    DAILY_LIMITS,
-    STATUS_THRESHOLDS,
-    analisis_produk,
-    read_nutrition_label,
-)
+import config
+import database as db
+import nutrition_tracker as tracker
+import nutrition_ui as ui
+from nutrition_calculator import badge, dampak_penambahan, nilai_dikonsumsi, ringkas_garam, ringkas_zat
+from nutrition_reader import kunci_gemini_dari_secrets, nama_default_produk, read_label
+from utils import (fmt_jumlah, fmt_persen, now_time, parse_float,
+                   salt_gram, tanggal_id, today_iso)
 
-# ---------------------------------------------------------------------------
-# Tampilan (palet biru RSPAL)
-# ---------------------------------------------------------------------------
-BIRU_TUA = "#0A2E6E"
-BIRU = "#1565C0"
-BIRU_MUDA = "#42A5F5"
-BIRU_PALE = "#EAF1FB"
-TEKS = "#10233F"
-ABU = "#5F7A93"
-HIJAU = "#059669"
-KUNING = "#D97706"
-MERAH = "#DC2626"
-
-_WARNA = {"hijau": HIJAU, "kuning": KUNING, "merah": MERAH}
-_BG_SOFT = {"hijau": "#E9F7F1", "kuning": "#FEF4E5", "merah": "#FDECEC"}
+db.init_database()
 
 st.set_page_config(
-    page_title="Nutri Level — Scan Label Gizi",
-    page_icon="📷",
+    page_title="GiziLens — Tracker GGL Harian",
+    page_icon="🔵",
     layout="wide",
-    initial_sidebar_state="collapsed",
+    initial_sidebar_state="expanded",
 )
+st.markdown(ui.css(), unsafe_allow_html=True)
 
-CSS = f"""
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-  html, body, [class*="css"] {{ font-family: 'Plus Jakarta Sans', 'Segoe UI', sans-serif; }}
-  .stApp {{
-    background:
-      radial-gradient(1100px 460px at 88% -8%, #EAF1FB 0%, rgba(234,241,251,0) 60%),
-      linear-gradient(180deg, #F7FAFD 0%, #F1F6FC 100%);
-  }}
-  [data-testid="stAppViewContainer"] {{
-    background:
-      radial-gradient(1100px 460px at 88% -8%, #EAF1FB 0%, rgba(234,241,251,0) 60%),
-      linear-gradient(180deg, #F7FAFD 0%, #F1F6FC 100%) !important;
-  }}
-  [data-testid="stHeader"] {{ background: transparent; }}
-
-  /* ---------- Kamera: bingkai rapi, bukan kotak "cekung" ---------- */
-  [data-testid="stCameraInput"] {{
-    border: 1px solid #D8E6F5 !important;
-    border-radius: 18px !important;
-    overflow: hidden;
-    box-shadow: 0 4px 14px rgba(10,46,110,.08);
-  }}
-  [data-testid="stCameraInput"] video {{
-    object-fit: cover;
-  }}
-  h1, h2, h3 {{ color: {BIRU_TUA}; }}
-
-  /* ---------- Hero ---------- */
-  .hero {{
-    position: relative; overflow: hidden;
-    background: linear-gradient(120deg, {BIRU_TUA} 0%, {BIRU} 58%, #2E86DE 100%);
-    border-radius: 24px; padding: 26px 30px 22px; margin: 6px 0 6px;
-    box-shadow: 0 10px 30px rgba(10,46,110,.22); color: #fff; text-align: center;
-  }}
-  .hero .orn {{ position: absolute; opacity: .13; user-select: none; pointer-events: none; }}
-  .hero-logo {{ height: 62px; margin-bottom: 4px; filter: drop-shadow(0 2px 4px rgba(0,0,0,.15)); }}
-  .hero h1 {{ color: #fff; font-size: 34px; font-weight: 800; margin: 2px 0 2px; letter-spacing: .3px; }}
-  .hero-org {{ color: #D8E6FB; font-size: 13px; font-weight: 600; margin-bottom: 6px; }}
-  .hero p {{ color: #EAF2FF; font-size: 15px; margin: 4px 0 10px; }}
-  .lencana {{
-    display: inline-block; background: rgba(255,255,255,.16); border: 1px solid rgba(255,255,255,.35);
-    color: #fff; font-size: 12.5px; font-weight: 600; border-radius: 999px; padding: 4px 13px; margin: 2px 3px;
-  }}
-  .hero .fitur-row {{ margin-top: 10px; }}
-  .hero .fitur {{
-    display: inline-flex; align-items: center; gap: 7px; margin: 3px 5px;
-    background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.3);
-    border-radius: 14px; padding: 7px 13px; font-size: 13px; font-weight: 600;
-  }}
-
-  /* ---------- Panel umum ---------- */
-  .panel {{ background:#fff; border:1px solid #E2EDF8; border-radius:18px;
-            padding:16px 18px; margin:10px 0; box-shadow:0 3px 12px rgba(10,46,110,.05); }}
-  .judul-seksi {{ font-size:20px; font-weight:800; color:{BIRU_TUA}; margin:18px 0 2px; }}
-  .sub-seksi {{ color:{ABU}; font-size:13.5px; margin-bottom:10px; }}
-  .kartu-info {{ background:{BIRU_PALE}; border-left:4px solid {BIRU}; border-radius:10px;
-                 padding:10px 14px; font-size:14px; color:{TEKS}; margin:8px 0; }}
-  .kartu-peringatan {{ background:linear-gradient(120deg,#7F1D1D,#DC2626); color:#fff; border-radius:16px;
-                      padding:16px 20px; margin:14px 0 8px; box-shadow:0 8px 22px rgba(220,38,38,.25); }}
-  .kartu-peringatan b {{ font-size:17px; }}
-  .kartu-peringatan p {{ margin:6px 0 0; font-size:14.5px; line-height:1.55; }}
-  .kartu-warning {{ background:#FFF7E6; border:1px solid #F5D68C; border-left:5px solid {KUNING};
-                   border-radius:10px; padding:10px 14px; font-size:14px; color:#7A4E03; margin:8px 0; }}
-
-  /* ---------- Kartu hasil nutrisi ---------- */
-  .nc {{ border:1px solid #E2EDF8; border-top:5px solid {BIRU}; border-radius:16px; background:#fff;
-        padding:14px 12px 12px; text-align:center; margin-top:6px;
-        box-shadow:0 3px 12px rgba(10,46,110,.06); height:100%; }}
-  .nc .nc-head {{ font-size:13px; font-weight:800; color:{TEKS}; letter-spacing:.6px; }}
-  .nc .nc-val {{ font-size:30px; font-weight:800; color:{TEKS}; line-height:1.15; margin-top:2px; }}
-  .nc .nc-unit {{ font-size:15px; font-weight:700; color:{ABU}; }}
-  .nc .nc-pct {{ font-size:13.5px; color:{ABU}; font-weight:600; margin:1px 0 8px; }}
-  .nc .nc-bar {{ height:7px; border-radius:99px; background:#EEF3F9; overflow:hidden; margin:0 4px 9px; }}
-  .nc .nc-bar i {{ display:block; height:100%; border-radius:99px; }}
-  .nc .nc-pill {{ display:inline-block; border-radius:999px; padding:4px 12px; font-size:12.5px;
-                 font-weight:800; }}
-  .nc .nc-scope {{ font-size:10.5px; color:#A9BBD2; margin-bottom:3px; font-weight:700; }}
-  .judul-hasil {{ text-align:center; font-size:23px; font-weight:800; color:{BIRU_TUA};
-                 margin:4px 0 0; }}
-  .footer-app {{ text-align:center; color:{ABU}; font-size:11.5px; margin-top:26px; }}
-</style>
-"""
-st.markdown(CSS, unsafe_allow_html=True)
-
-_LOGO = Path(__file__).parent / "assets" / "logo_rspal.png"
-
-
-def hero():
-    logo_b64 = ""
-    if _LOGO.exists():
-        logo_b64 = base64.b64encode(_LOGO.read_bytes()).decode()
-    logo = (
-        f'<img class="hero-logo" src="data:image/png;base64,{logo_b64}" alt="RSPAL dr. Ramelan"/>'
-        if logo_b64 else ""
-    )
-    ornamen = "".join(
-        f'<span class="orn" style="left:{l};top:{t};transform:rotate({r});font-size:{s}">{e}</span>'
-        for e, (l, t, r, s) in zip(
-            ["🥫", "🍭", "🥤", "🧀", "🍟", "🧃"],
-            [("3%", "8%", "-14deg", "74px"), ("88%", "10%", "10deg", "58px"),
-             ("6%", "78%", "9deg", "60px"), ("92%", "80%", "-9deg", "66px"),
-             ("2%", "45%", "6deg", "44px"), ("95%", "44%", "-7deg", "42px")],
-        )
-    )
-    st.markdown(
-        f'<div class="hero">{ornamen}'
-        f'{logo}'
-        f'<h1>Nutri Level</h1>'
-        f'<div class="hero-org">Sub Departemen Gizi RSPAL dr. Ramelan</div>'
-        f'<p>Scan label Informasi Nilai Gizi → tahu level <b>gula</b>, '
-        f'<b>natrium</b> &amp; <b>lemak</b> produkmu</p>'
-        f'<div class="fitur-row">'
-        f'<span class="fitur">📷 Scan label</span>'
-        f'<span class="fitur">🤖 AI membaca</span>'
-        f'<span class="fitur">🟢🟡🔴 Level nutrisi</span>'
-        f'</div></div>',
-        unsafe_allow_html=True,
-    )
-
+NAV = [
+    "🏠 Beranda",
+    "📷 Scan Produk",
+    "📊 GGL Hari Ini",
+    "📅 Riwayat",
+    "📈 Ringkasan 7 Hari",
+    "📖 Edukasi",
+    "ℹ️ Tentang",
+]
 
 # ---------------------------------------------------------------------------
-# State & helper
+# State bantu
 # ---------------------------------------------------------------------------
 def ss(k, v):
     if k not in st.session_state:
         st.session_state[k] = v
 
 
-ss("stage", "scan")          # scan | confirm | result
-ss("limits", dict(DAILY_LIMITS))
-ss("ambang", dict(STATUS_THRESHOLDS))
-ss("scan", None)             # hasil pembacaan AI/OCR
-ss("data", None)             # nilai yang dikonfirmasi user
-ss("gagal_ocr", None)        # pesan kalau mesin OCR error
+ss("nav", NAV[0])
+ss("stage_scan", "kamera")   # kamera | konfirmasi
+ss("scan", None)
+ss("added_ok", False)
+ss("nama_produk", "")
+ss("hist_date", _dt.date.today())
 
 
-def reset_ke_kamera():
-    for k in ("scan", "data", "gagal_ocr"):
+def reset_scan():
+    for k in ("scan", "added_ok", "nama_produk", "takaran_saji",
+              "sajian_kemasan", "inp_gula", "inp_natrium", "inp_lemak"):
         st.session_state.pop(k, None)
-    st.session_state.stage = "scan"
-    st.rerun()
+    st.session_state.stage_scan = "kamera"
 
 
-def _fmt_jumlah(v: float) -> str:
-    """4 -> '4' ; 18.5 -> '18,5' ; 1250 -> '1.250'"""
-    if v is None:
-        return "—"
-    if abs(v - round(v)) < 1e-9:
-        return f"{int(round(v)):,}".replace(",", ".")
-    return f"{v:.1f}".replace(".", ",")
+def sidebar():
+    with st.sidebar:
+        st.markdown(f"## 🔵 **{config.APP_NAME}**")
+        st.caption(config.ORG)
+        pilihan = st.radio("Menu", NAV, index=NAV.index(st.session_state.nav),
+                           label_visibility="collapsed")
+        st.session_state.nav = pilihan
+        if db.lokasi_db_cadangan():
+            st.caption("⚠️ DB sementara (folder temp) — data bisa hilang saat server mati.")
+        st.markdown("---")
+        st.caption(f"📅 {tanggal_id(_dt.date.today())}")
 
 
-def _fmt_persen(p: float) -> str:
-    if p is None:
-        return "—"
-    if abs(p - round(p)) < 1e-9:
-        return str(int(round(p)))
-    return f"{p:.1f}".replace(".", ",")
+def _kartu_3(html_list: list[str]):
+    kolom = st.columns(len(html_list))
+    for k, h in zip(kolom, html_list):
+        k.markdown(h, unsafe_allow_html=True)
 
 
-# ---------------------------------------------------------------------------
-# Pengaturan batas harian & ambang warna (bisa diubah)
-# ---------------------------------------------------------------------------
-def bagian_pengaturan():
-    with st.expander("⚙️ Ubah batas harian / ambang warna (opsional, default sesuai anjuran)"):
-        c1, c2, c3 = st.columns(3)
-        st.session_state.limits["sugar_g"] = c1.number_input(
-            "🍬 Batas gula (g/hari)", 1.0, 500.0, st.session_state.limits["sugar_g"], 1.0, format="%g"
-        )
-        st.session_state.limits["sodium_mg"] = c2.number_input(
-            "🧂 Batas natrium (mg/hari)", 100.0, 10000.0, st.session_state.limits["sodium_mg"], 50.0, format="%g"
-        )
-        st.session_state.limits["fat_g"] = c3.number_input(
-            "🥑 Batas lemak total (g/hari)", 1.0, 500.0, st.session_state.limits["fat_g"], 1.0, format="%g"
-        )
-        d1, d2, _ = st.columns(3)
-        st.session_state.ambang["warning"] = d1.number_input(
-            "🟡 Kuning mulai dari (%)", 1.0, 100.0, st.session_state.ambang["warning"], 1.0, format="%g"
-        )
-        st.session_state.ambang["danger"] = d2.number_input(
-            "🔴 Merah mulai dari (%)", 1.0, 300.0, st.session_state.ambang["danger"], 1.0, format="%g"
-        )
-        st.caption(
-            "📚 Sumber batas harian: Permenkes RI No. 30 Tahun 2013 tentang "
-            "Informasi Kandungan Gula, Garam, dan Lemak (gula ≤ 50 g/hari ≈ 4 sdm, "
-            "natrium ≤ 2.000 mg/hari ≈ 1 sdt garam, lemak ≤ 67 g/hari ≈ 5 sdm) — "
-            "sejalan dengan rekomendasi WHO."
-        )
-
-
-# ---------------------------------------------------------------------------
-# Tahap 1: SCAN
-# ---------------------------------------------------------------------------
-def _kunci_gemini():
-    try:
-        return st.secrets.get("GEMINI_API_KEY")
-    except Exception:
-        return None
-
-
-def _proses_foto(byte_img: bytes):
-    """Foto (dari kamera atau unggahan) -> OCR -> pindah ke tahap konfirmasi."""
-    st.success("✅ Foto berhasil diambil.")
-    with st.spinner("Sedang membaca informasi nilai gizi..."):
-        try:
-            hasil = read_nutrition_label(byte_img, gemini_key=_kunci_gemini())
-            st.session_state.gagal_ocr = None
-        except Exception as exc:
-            hasil = {
-                "gula": None, "natrium": None, "lemak": None,
-                "protein": None, "karbohidrat": None, "energi": None,
-                "takaran_saji": None, "sajian_per_kemasan": 1, "nama_produk": None,
-                "_baris": [], "_sumber": "gagal",
-            }
-            st.session_state.gagal_ocr = str(exc)
-
-    st.session_state.scan = hasil
-    st.session_state.stage = "confirm"
-    st.rerun()
-
-
-def tahap_scan():
-    st.markdown('<div class="judul-seksi">📷 Scan Label Informasi Gizi</div>', unsafe_allow_html=True)
+# ===========================================================================
+# 🏠 BERANDA
+# ===========================================================================
+def halaman_beranda():
+    ui.hero()
+    st.markdown("### Selamat Datang di GiziLens 👋")
     st.markdown(
-        '<div class="panel">Arahkan kamera ke bagian <b>"Informasi Nilai Gizi"</b> pada kemasan.<br><br>'
-        "Pastikan:<br>• Label terlihat penuh<br>• Tulisan tidak buram<br>"
-        "• Cahaya cukup<br>• Kamera tidak terlalu miring<br>"
-        '• Kalau kamera sulit fokus: geser pelan mendekat/menjauh (±15–25 cm) '
-        "sampai tulisan tajam, lalu ambil foto</div>",
-        unsafe_allow_html=True,
+        "Pantau **Gula, Garam & Lemak (GGL)** dari makanan dan minuman kemasan. "
+        "Scan labelnya, catat yang kamu konsumsi, dan lihat sisa batas harianmu."
     )
 
-    gambar = st.camera_input("Ambil foto label Informasi Nilai Gizi", key="cam")
-    if gambar is not None:
-        _proses_foto(gambar.getvalue())
-        return
-
-    st.info("📷 Silakan scan label informasi gizi produk.")
-
-    # ---- Jalur cadangan: kamera HP asli (fokus/zoom penuh) atau galeri ----
-    st.markdown(
-        '<div class="kartu-info" style="margin-top:14px;">📤 <b>Kamera HP-mu susah fokus?</b> '
-        "Foto dulu pakai aplikasi kamera HP biasa (bisa ketuk layar untuk fokus & zoom), "
-        "lalu pilih fotonya di bawah ini — hasilnya sama saja.</div>",
-        unsafe_allow_html=True,
-    )
-    unggah = st.file_uploader(
-        "Pilih foto label dari kamera HP / galeri",
-        type=["jpg", "jpeg", "png"],
-        key="upl",
-    )
-    if unggah is not None:
-        _proses_foto(unggah.getvalue())
-
-
-# ---------------------------------------------------------------------------
-# Tahap 2: KONFIRMASI hasil AI
-# ---------------------------------------------------------------------------
-def tahap_konfirmasi():
-    st.markdown('<div class="judul-seksi">🔎 Hasil Pembacaan Label</div>', unsafe_allow_html=True)
-    scan = st.session_state.scan or {}
-    # Kalau user pernah konfirmasi (tombol "Koreksi Angka"), nilai awal = nilai
-    # yang terakhir ia konfirmasi, bukan hasil OCR lama.
-    sumber = {**scan, **(st.session_state.data or {})}
-
-    if st.session_state.gagal_ocr:
-        st.error(
-            f"🤖 Mesin pembaca label bermasalah: {st.session_state.gagal_ocr}\n\n"
-            "Kamu tetap bisa memakai aplikasi: isi nilai langsung dari label di bawah ini."
-        )
-    else:
-        if str(scan.get("_sumber", "")).startswith("gemini"):
-            model = str(scan.get("_sumber")).split(":", 1)[-1]
-            st.caption(f"🤖 Dibaca dengan AI Vision Gemini ({model}).")
-        else:
-            st.caption("🤖 Dibaca dengan OCR.")
-        if scan.get("_gemini_error"):
-            with st.expander("🤖 Catatan AI Vision (gagal, dipakai OCR cadangan)"):
-                st.caption(str(scan.get("_gemini_error")))
-        baris = scan.get("_baris") or []
-        if baris:
-            with st.expander("📄 Teks mentah yang terbaca mesin"):
-                st.code("\n".join(baris))
-
-        tidak_terbaca = sumber.get("gula") is None and sumber.get("natrium") is None and sumber.get("lemak") is None
-        if tidak_terbaca:
-            st.warning(
-                "🤖 Angka gula/natrium/lemak tidak terbaca dengan yakin. "
-                "Isi manual sesuai label pada kemasan ya."
-            )
-
-    k = lambda nama, d: sumber.get(nama) if sumber.get(nama) is not None else d
-
-    c1, c2 = st.columns(2)
-    takaran = c1.text_input(
-        "Takaran saji", value=k("takaran_saji", "") or "",
-        placeholder="contoh: 250 ml / 1 bungkus (35 g)",
-    )
-    sajian = c2.number_input(
-        "Jumlah sajian per kemasan", 1, 60, int(k("sajian_per_kemasan", 1)), 1
-    )
-
-    g1, g2, g3 = st.columns(3)
-    gula = g1.number_input("Gula (gram)", 0.0, 2000.0, float(k("gula", 0.0)), 0.1, format="%g")
-    natrium = g2.number_input("Natrium (mg)", 0.0, 20000.0, float(k("natrium", 0.0)), 1.0, format="%g")
-    lemak = g3.number_input("Lemak Total (gram)", 0.0, 2000.0, float(k("lemak", 0.0)), 0.1, format="%g")
-
-    st.markdown(
-        '<div class="kartu-warning">⚠️ <b>Periksa kembali hasil pembacaan AI dengan label pada '
-        "kemasan sebelum melakukan analisis.</b> Semua angka di atas bisa diedit kalau ada yang "
-        "tidak sesuai.</div>",
-        unsafe_allow_html=True,
-    )
-
-    b1, b2 = st.columns([1, 1])
-    if b1.button("✅ Konfirmasi & Analisis", type="primary", use_container_width=True):
-        st.session_state.data = {
-            "takaran_saji": (takaran or "").strip() or None,
-            "sajian_per_kemasan": int(sajian),
-            "gula": float(gula),
-            "natrium": float(natrium),
-            "lemak": float(lemak),
-            "nama_produk": scan.get("nama_produk"),
-        }
-        st.session_state.stage = "result"
-        st.rerun()
-    if b2.button("📷 Ambil Foto Ulang", use_container_width=True):
-        st.session_state.pop("scan", None)
-        st.session_state.pop("data", None)
-        st.session_state.pop("gagal_ocr", None)
-        st.session_state.stage = "scan"
-        st.rerun()
-
-
-# ---------------------------------------------------------------------------
-# Kartu hasil per zat gizi
-# ---------------------------------------------------------------------------
-def _kartu_html(meta: dict, stat: dict, scope: str):
-    if stat is None:
-        return ""
-    warna = _WARNA[stat["warna"]]
-    bg = _BG_SOFT[stat["warna"]]
-    lebar_bar = max(2.0, min(100.0, stat["persen"]))
-    return f"""
-    <div class="nc" style="border-top-color:{warna};">
-      <div class="nc-scope">{scope}</div>
-      <div class="nc-head">{meta['emoji']} {meta['label']}</div>
-      <div class="nc-val">{_fmt_jumlah(stat['nilai'])}<span class="nc-unit"> {meta['unit']}</span></div>
-      <div class="nc-pct">{_fmt_persen(stat['persen'])}% batas harian</div>
-      <div class="nc-bar"><i style="width:{lebar_bar}%;background:{warna};"></i></div>
-      <div class="nc-pill" style="color:{warna};background:{bg};">{stat['badge']} · {stat['pesan']}</div>
-    </div>"""
-
-
-def _deret_kartu(analisis: dict, skala: str):
-    if skala == "kemasan":
-        stats = analisis["per_kemasan"]
-        scope = "1 KEMASAN"
-    else:
-        stats = analisis["per_sajian"]
-        scope = "1 SAJIAN"
-    cols = st.columns(3)
-    for col, meta in zip(cols, NUTRIENTS):
-        col.markdown(_kartu_html(meta, stats[meta["key"]], scope), unsafe_allow_html=True)
-
-
-# ---------------------------------------------------------------------------
-# Tahap 3: HASIL ANALISIS
-# ---------------------------------------------------------------------------
-def tahap_hasil():
-    data = st.session_state.data
-    if not data:
-        reset_ke_kamera()
-        return
-
-    analisis = analisis_produk(data, st.session_state.limits, st.session_state.ambang)
-    n = analisis["sajian_per_kemasan"]
-
-    st.markdown('<div class="judul-hasil">📊 HASIL ANALISIS PRODUK</div>', unsafe_allow_html=True)
-    ket = []
-    if data.get("takaran_saji"):
-        ket.append(f"Takaran saji: {data['takaran_saji']}")
-    ket.append(f"{n} sajian per kemasan")
-    st.markdown(
-        f'<div class="sub-seksi" style="text-align:center;">{" · ".join(ket)}</div>',
-        unsafe_allow_html=True,
-    )
-
-    # ----- per sajian -----
-    st.markdown('<div class="judul-seksi">🥄 Nilai per 1 Sajian</div>', unsafe_allow_html=True)
-    _deret_kartu(analisis, "sajian")
-
-    # ----- per kemasan (kalau > 1 sajian) -----
-    if n > 1:
-        st.markdown(
-            f'<div class="judul-seksi" style="margin-top:26px;">📦 Jika 1 Kemasan Dikonsumsi Seluruhnya '
-            f'<span style="font-size:12px;color:{ABU};">({n} × nilai per sajian)</span></div>',
-            unsafe_allow_html=True,
-        )
-        _deret_kartu(analisis, "kemasan")
-
-    # ----- peringatan -----
-    if analisis["ada_merah"]:
-        merah_sajian = any(
-            s and s["warna"] == "merah" for s in analisis["per_sajian"].values()
-        )
-        kalimat = (
-            "Kandungan salah satu zat gizi pada produk ini telah mencapai atau melebihi "
-            "batas konsumsi harian."
-        )
-        if not merah_sajian:
-            kalimat += (
-                " Nilai per sajiannya masih aman, tetapi jika satu kemasan dihabiskan "
-                "sekaligus, batas harian bisa terlampaui."
-            )
-        kalimat += " Perhatikan konsumsi makanan dan minuman lain sepanjang hari."
-        st.markdown(
-            f'<div class="kartu-peringatan"><b>⚠️ PERINGATAN</b><p>{kalimat}</p></div>',
-            unsafe_allow_html=True,
-        )
-
-    with st.expander("ℹ️ Batas harian & ambang yang dipakai"):
-        st.markdown(
-            f"- 🍬 Gula: **{_fmt_jumlah(st.session_state.limits['sugar_g'])} g/hari**\n"
-            f"- 🧂 Natrium: **{_fmt_jumlah(st.session_state.limits['sodium_mg'])} mg/hari**\n"
-            f"- 🥑 Lemak total: **{_fmt_jumlah(st.session_state.limits['fat_g'])} g/hari**\n\n"
-            f"- 🟢 Hijau: 0–{_fmt_persen(st.session_state.ambang['warning'] - 1)}% batas harian\n"
-            f"- 🟡 Kuning: {_fmt_persen(st.session_state.ambang['warning'])}–"
-            f"{_fmt_persen(st.session_state.ambang['danger'] - 1)}%\n"
-            f"- 🔴 Merah: ≥ {_fmt_persen(st.session_state.ambang['danger'])}%\n\n"
-            "**📚 Sumber:**\n"
-            "- Batas gula, natrium & lemak: **Permenkes RI No. 30 Tahun 2013** "
-            "(Informasi Kandungan Gula, Garam, dan Lemak untuk Pangan Olahan & "
-            "Pangan Siap Saji) — gula ≤ 50 g (≈4 sdm), natrium ≤ 2.000 mg (≈1 sdt garam), "
-            "lemak ≤ 67 g (≈5 sdm) per orang per hari.\n"
-            "- Nilai ini sejalan dengan rekomendasi **WHO** (gula < 10% energi, "
-            "natrium < 2.000 mg/hari).\n"
-            "- Angka Acuan Label (AAL) energi **2.150 kkal** dipakai label pangan "
-            "Indonesia (BPOM) untuk menghitung %AKG."
-        )
+    r = tracker.ringkasan_tanggal()
+    st.markdown("#### GGL HARI INI")
+    g = r["ringkasan"]["gula"]
+    n = r["ringkasan"]["natrium"]
+    l = r["ringkasan"]["lemak"]
+    _kartu_3([
+        ui.kartu_total("🍬", "GULA", g["konsumsi"], g["batas"], "g", g),
+        ui.kartu_total("🧂", "GARAM/NATRIUM", n["konsumsi"], n["batas"], "mg", n,
+                       baris_tambahan=[f"≈ {fmt_jumlah(n['garam_g'])} / {fmt_jumlah(n['garam_batas_g'])} g garam"]),
+        ui.kartu_total("🥑", "LEMAK TOTAL", l["konsumsi"], l["batas"], "g", l),
+    ])
 
     st.markdown("---")
     b1, b2 = st.columns([1, 1])
-    if b1.button("📷 Scan Produk Lain", type="primary", use_container_width=True):
-        reset_ke_kamera()
-    if b2.button("✏️ Koreksi Angka", use_container_width=True):
-        st.session_state.stage = "confirm"
+    if b1.button("📷 SCAN PRODUK", type="primary", use_container_width=True):
+        st.session_state.nav = "📷 Scan Produk"
+        st.rerun()
+    if b2.button("📊 Lihat GGL Hari Ini", use_container_width=True):
+        st.session_state.nav = "📊 GGL Hari Ini"
         st.rerun()
 
 
-# ---------------------------------------------------------------------------
-# Utama
-# ---------------------------------------------------------------------------
-hero()
-bagian_pengaturan()
+# ===========================================================================
+# 📷 SCAN PRODUK
+# ===========================================================================
+def _proses_foto(byte_img: bytes):
+    st.success("✅ Foto berhasil diambil.")
+    with st.spinner("Sedang membaca informasi nilai gizi..."):
+        try:
+            hasil = read_label(byte_img, gemini_key=kunci_gemini_dari_secrets())
+        except Exception as exc:
+            hasil = {
+                "nama_produk": None, "takaran_saji": None, "sajian_per_kemasan": 1,
+                "gula": None, "natrium": None, "lemak": None,
+                "protein": None, "karbohidrat": None, "energi": None,
+                "_baris": [], "_sumber": "gagal", "_ocr_error": str(exc),
+            }
+    st.session_state.scan = hasil
+    st.session_state.added_ok = False
+    st.session_state.stage_scan = "konfirmasi"
+    st.session_state.nama_produk = nama_default_produk(hasil)
+    st.rerun()
 
-if st.session_state.stage == "scan":
-    tahap_scan()
-elif st.session_state.stage == "confirm":
-    tahap_konfirmasi()
+
+def _blok_kandungan_produk(per_sajian: dict, jumlah_sajian: float):
+    """A. PRODUK INI (nilai per sajian) + B. JIKA DIKONSUMSI (dampak)."""
+    batas = config.DAILY_LIMITS
+    ambang = config.STATUS_THRESHOLDS
+    r_g = ringkas_zat(per_sajian["gula"], batas["sugar_g"], ambang)
+    r_n = ringkas_garam(per_sajian["natrium"], batas["sodium_mg"], ambang)
+    r_l = ringkas_zat(per_sajian["lemak"], batas["fat_g"], ambang)
+
+    st.markdown("##### A. PRODUK INI (kandungan per 1 sajian)")
+    _kartu_3([
+        ui.kartu_total("🍬", "GULA", r_g["konsumsi"], r_g["batas"], "g", r_g),
+        ui.kartu_total("🧂", "NATRIUM", r_n["konsumsi"], r_n["batas"], "mg", r_n,
+                       baris_tambahan=[f"≈ {fmt_jumlah(r_n['garam_g'])} g garam"]),
+        ui.kartu_total("🥑", "LEMAK", r_l["konsumsi"], r_l["batas"], "g", r_l),
+    ])
+    st.caption("Level warna produk dihitung per 1 sajian terhadap batas harian — "
+               "belum tentu sama dengan kualitas total konsumsimu hari ini.")
+
+    # ---- dampak ----
+    dampak = dampak_penambahan(
+        db.get_daily_totals(today_iso()), nilai_dikonsumsi(per_sajian, jumlah_sajian), ambang)
+    st.markdown(f"##### B. JIKA DIKONSUMSI ({fmt_jumlah(jumlah_sajian)} sajian)")
+    garis = []
+    for meta in config.NUTRIENTS:
+        k = meta["key"]
+        d = dampak[k]
+        unit = meta["unit"]
+        garis.append(
+            f"**{meta['emoji']} {meta['jenis']}:** "
+            f"{fmt_jumlah(d['sekarang'])} → **{fmt_jumlah(d['prediksi'])} {unit}** "
+            f"· {fmt_persen(d['persen_sekarang'])}% → **{fmt_persen(d['persen_prediksi'])}%**"
+        )
+    st.markdown("<br>".join(garis))
+
+    lewat = {meta["key"]: dampak[meta["key"]] for meta in config.NUTRIENTS
+             if dampak[meta["key"]]["warna_prediksi"] == "danger"}
+    if lewat:
+        rincian = "; ".join(
+            f"{config.NUTRIENTS[[m['key'] for m in config.NUTRIENTS].index(k)]['emoji']} "
+            f"{d['prediksi']:.0f}/{d['batas']:.0f} "
+            f"({fmt_persen(d['persen_prediksi'])}%)"
+            for k, d in lewat.items())
+        ui.banner_peringatan(
+            "⚠️ PERHATIAN",
+            f"Jika produk ini ditambahkan, total konsumsi harian akan melebihi batas: "
+            f"{rincian}. Tetap boleh dicatat — GiziLens hanya mengingatkan, tidak melarang. 😊",
+        )
+    return dampak
+
+
+def halaman_scan():
+    ui.judul_seksi("📷 Scan Produk", "Arahkan kamera ke bagian Informasi Nilai Gizi pada kemasan.")
+
+    # ---------------- tahap kamera ----------------
+    if st.session_state.stage_scan == "kamera" or st.session_state.scan is None:
+        if st.session_state.stage_scan != "kamera":
+            reset_scan()
+        st.markdown(
+            '<div class="panel">Pastikan: • Label terlihat penuh • Tulisan tidak buram '
+            "• Cahaya cukup • Kamera tidak terlalu miring<br>"
+            "• Kalau kamera sulit fokus: geser pelan mendekat/menjauh (±15–25 cm) sampai tajam</div>",
+            unsafe_allow_html=True,
+        )
+        gambar = st.camera_input("Ambil foto label Informasi Nilai Gizi", key="cam")
+        if gambar is not None:
+            _proses_foto(gambar.getvalue())
+            return
+        st.info("📷 Silakan scan label informasi gizi produk.")
+        st.markdown(
+            '<div class="kartu-info" style="margin-top:12px;">📤 <b>Kamera susah fokus?</b> '
+            "Foto dulu pakai kamera HP biasa, lalu pilih fotonya di bawah — hasilnya sama.</div>",
+            unsafe_allow_html=True,
+        )
+        unggah = st.file_uploader("Pilih foto label dari kamera HP / galeri",
+                                  type=["jpg", "jpeg", "png"], key="upl")
+        if unggah is not None:
+            _proses_foto(unggah.getvalue())
+        return
+
+    # ---------------- tahap konfirmasi + konsumsi ----------------
+    scan = st.session_state.scan or {}
+    ui.judul_seksi("🔎 Hasil Pembacaan Label", "Periksa kembali hasil AI dengan label asli — semua angka bisa diedit.")
+
+    sumber = str(scan.get("_sumber", ""))
+    if sumber.startswith("gemini"):
+        st.caption(f"🤖 Dibaca dengan AI Vision Gemini ({sumber.split(':', 1)[-1]}).")
+    elif sumber == "ocr":
+        st.caption("🤖 Dibaca dengan OCR.")
+        if scan.get("_gemini_error"):
+            with st.expander("🤖 Catatan AI Vision (gagal, dipakai OCR cadangan)"):
+                st.caption(str(scan.get("_gemini_error")))
+    else:
+        st.warning("🤖 Pembaca label bermasalah — isi manual sesuai label kemasan.")
+
+    baris_ocr = scan.get("_baris") or []
+    if baris_ocr:
+        with st.expander("📄 Teks mentah yang terbaca mesin"):
+            st.code("\n".join(baris_ocr))
+
+    def ambil(k, d):
+        v = scan.get(k)
+        return v if v is not None else d
+
+    c1, c2 = st.columns(2)
+    nama = c1.text_input("Nama produk (opsional)", key="inp_nama",
+                         value=st.session_state.get("nama_produk", "") or "")
+    takaran = c2.text_input("Takaran saji", key="inp_takaran",
+                            value=str(ambil("takaran_saji", "") or ""),
+                            placeholder="contoh: 250 ml / 1 bungkus (35 g)")
+    st.session_state.nama_produk = nama
+
+    g1, g2, g3 = st.columns(3)
+    gula = g1.number_input("Gula (gram) per sajian", 0.0, 2000.0,
+                           float(ambil("gula", 0.0)), 0.1, format="%g", key="inp_gula")
+    natrium = g2.number_input("Natrium (mg) per sajian", 0.0, 20000.0,
+                              float(ambil("natrium", 0.0)), 1.0, format="%g", key="inp_natrium")
+    lemak = g3.number_input("Lemak Total (gram) per sajian", 0.0, 2000.0,
+                            float(ambil("lemak", 0.0)), 0.1, format="%g", key="inp_lemak")
+    sajian_kemasan = st.number_input("Jumlah sajian per kemasan", 1, 60,
+                                     int(ambil("sajian_per_kemasan", 1)), 1,
+                                     key="inp_sajian_kemasan")
+
+    st.markdown("---")
+    st.markdown("#### 🍽️ Berapa sajian yang Anda konsumsi?")
+    jumlah = st.number_input("Jumlah sajian dikonsumsi", 0.25, 60.0, 1.0, 0.5,
+                             format="%g", key="inp_jumlah")
+    st.caption("Contoh: 0.5 sajian = setengah, 1.5 = satu setengah, 2 = habis 2 sajian.")
+
+    per_sajian = {"gula": gula, "natrium": natrium, "lemak": lemak}
+    if not st.session_state.added_ok:
+        dampak = _blok_kandungan_produk(per_sajian, jumlah)
+    else:
+        st.success("✅ **Berhasil ditambahkan ke catatan GGL hari ini.** "
+                   "Data sudah tersimpan & dashboard diperbarui.")
+
+    st.markdown("---")
+    b1, b2 = st.columns([1, 1])
+    if not st.session_state.added_ok:
+        if b1.button("➕ Tambahkan ke GGL Hari Ini", type="primary",
+                     use_container_width=True):
+            nama_final = (nama or "").strip() or "Produk (tanpa nama)"
+            tracker.tambah_catatan(
+                nama_produk=nama_final,
+                takaran_saji=(takaran or "").strip(),
+                jumlah_sajian=jumlah,
+                per_sajian=per_sajian,
+            )
+            st.session_state.added_ok = True
+            st.rerun()
+    else:
+        st.caption("Data tersimpan. Tekan tombol di bawah untuk scan produk lain.")
+    if b2.button("📷 Scan Produk Lain", use_container_width=True):
+        reset_scan()
+        st.rerun()
+    if b1 and not st.session_state.added_ok:
+        with b1:
+            st.caption("Produk baru masuk catatan hanya setelah tombol ini ditekan.")
+
+
+# ===========================================================================
+# Tabel produk + edit/hapus (dipakai GGL Hari Ini & Riwayat)
+# ===========================================================================
+def _tabel_produk_editor(baris, judul_tabel: str = "🍽️ Produk yang Dikonsumsi"):
+    if not baris:
+        st.info("Belum ada produk tercatat pada tanggal ini.")
+        return
+    ui.judul_seksi(judul_tabel)
+    data = []
+    for b in baris:
+        data.append({
+            "Waktu": b["time"], "Produk": b["product_name"] or "-",
+            "Jumlah": f"{fmt_jumlah(b['consumed_servings'])} sajian",
+            "Gula (g)": fmt_jumlah(b["sugar_g"]),
+            "Natrium (mg)": fmt_jumlah(b["sodium_mg"]),
+            "Lemak (g)": fmt_jumlah(b["fat_g"]),
+            "id": b["id"],
+        })
+    df = pd.DataFrame(data).set_index("id")
+    st.dataframe(df, use_container_width=True, hide_index=True)
+
+    for b in baris:
+        rid = b["id"]
+        srv_lama = max(float(b["consumed_servings"] or 0), 0.01)
+        with st.expander(f"✏️ {b['product_name'] or 'Produk'} — {b['time']} "
+                         f"({fmt_jumlah(b['consumed_servings'])} sajian)"):
+            e1, e2 = st.columns([2, 1])
+            e_nama = e1.text_input("Nama produk", value=b["product_name"] or "",
+                                   key=f"en{rid}")
+            e_srv = e2.number_input("Jumlah sajian dikonsumsi", 0.25, 60.0,
+                                    srv_lama, 0.5, format="%g", key=f"es{rid}")
+            st.caption("Nilai gula/natrium/lemak ikut dihitung ulang otomatis "
+                       "(proporsional dari kandungan per sajian).")
+            simpan, hapus = st.columns(2)
+            if simpan.button("💾 Simpan", key=f"sv{rid}"):
+                rasio = e_srv / srv_lama
+                db.update_consumption(
+                    rid, consumed_servings=e_srv,
+                    sugar_g=float(b["sugar_g"] or 0) * rasio,
+                    sodium_mg=float(b["sodium_mg"] or 0) * rasio,
+                    fat_g=float(b["fat_g"] or 0) * rasio,
+                    product_name=(e_nama or "").strip() or None)
+                st.success("Tersimpan ✅")
+                st.rerun()
+            if hapus.button("🗑️ Hapus", key=f"del{rid}"):
+                db.delete_consumption(rid)
+                st.success("Dihapus 🗑️")
+                st.rerun()
+
+
+# ===========================================================================
+# 📊 GGL HARI INI
+# ===========================================================================
+def halaman_ggl_hari_ini():
+    ui.judul_seksi("📊 GGL Hari Ini", tanggal_id(_dt.date.today()))
+    r = tracker.ringkasan_tanggal()
+    g, n, l = (r["ringkasan"]["gula"], r["ringkasan"]["natrium"], r["ringkasan"]["lemak"])
+
+    _kartu_3([
+        ui.kartu_total("🍬", "GULA", g["konsumsi"], g["batas"], "g", g),
+        ui.kartu_total("🧂", "GARAM / NATRIUM", n["konsumsi"], n["batas"], "mg", n,
+                       baris_tambahan=[
+                           f"≈ {fmt_jumlah(n['garam_g'])} / {fmt_jumlah(n['garam_batas_g'])} g garam"]),
+        ui.kartu_total("🥑", "LEMAK TOTAL", l["konsumsi"], l["batas"], "g", l),
+    ])
+    badge_teks, pesan = badge(r["status_keseluruhan"])
+    st.markdown(f"#### Status konsumsi hari ini: {badge_teks} · {pesan}")
+
+    # ---- Sisa batas ----
+    with st.expander("SISA BATAS HARI INI", expanded=True):
+        for meta in config.NUTRIENTS:
+            rr = r["ringkasan"][meta["key"]]
+            if rr["lebih"] > 0:
+                st.markdown(f"- {meta['emoji']} **{meta['jenis']}**: 🔴 sudah **melebihi batas "
+                            f"{fmt_jumlah(rr['lebih'])} {meta['unit']}** (konsumsi "
+                            f"{fmt_jumlah(rr['konsumsi'])} / {fmt_jumlah(rr['batas'])} {meta['unit']})")
+            else:
+                st.markdown(f"- {meta['emoji']} **{meta['jenis']}**: "
+                            f"**{fmt_jumlah(rr['sisa'])} {meta['unit']}** tersisa "
+                            f"(batas {fmt_jumlah(rr['batas'])} {meta['unit']})")
+
+    # ---- Kontributor terbesar ----
+    kontributor = tracker.kontributor_hari_ini()
+    ada = any(kontributor.values())
+    if ada:
+        ui.judul_seksi("🔎 Kontributor GGL Hari Ini")
+        k1, k2, k3 = st.columns(3)
+        for kol, meta in zip((k1, k2, k3), config.NUTRIENTS):
+            kt = kontributor[meta["key"]]
+            if kt and kt["nilai"] > 0:
+                kol.markdown(
+                    f"**{meta['emoji']} {meta['jenis']} tertinggi**  \n"
+                    f"{kt['nama']}  \n**{fmt_jumlah(kt['nilai'])} {meta['unit']}**  \n"
+                    f"<small style='color:#5F7A93'>pukul {kt['waktu']}</small>",
+                    unsafe_allow_html=True)
+            else:
+                kol.markdown(f"**{meta['emoji']} {meta['jenis']}**  \n—")
+
+    st.markdown("---")
+    _tabel_produk_editor(r["baris"])
+    if r["baris"]:
+        st.markdown(
+            f"**TOTAL HARI INI** — Gula: **{fmt_jumlah(g['konsumsi'])} g** · "
+            f"Natrium: **{fmt_jumlah(n['konsumsi'])} mg** · "
+            f"Lemak: **{fmt_jumlah(l['konsumsi'])} g**"
+        )
+
+
+# ===========================================================================
+# 📅 RIWAYAT
+# ===========================================================================
+def halaman_riwayat():
+    ui.judul_seksi("📅 Riwayat GGL", "Lihat catatan konsumsi di tanggal lain.")
+    n1, n2, n3 = st.columns([1, 3, 1])
+    if n1.button("◀ Sebelumnya", use_container_width=True):
+        st.session_state.hist_date = st.session_state.hist_date - _dt.timedelta(days=1)
+        st.rerun()
+    tgl = n2.date_input("Pilih tanggal", key="hist_date", max_value=_dt.date.today(),
+                        label_visibility="collapsed")
+    if n3.button("Berikutnya ▶", use_container_width=True,
+                 disabled=tgl >= _dt.date.today()):
+        st.session_state.hist_date = st.session_state.hist_date + _dt.timedelta(days=1)
+        st.rerun()
+
+    iso = tgl.isoformat()
+    r = tracker.ringkasan_tanggal(iso)
+    st.markdown(f"#### {tanggal_id(tgl)}")
+    g, n, l = (r["ringkasan"]["gula"], r["ringkasan"]["natrium"], r["ringkasan"]["lemak"])
+    m1, m2, m3 = st.columns(3)
+    m1.metric("🍬 Gula", f"{fmt_jumlah(g['konsumsi'])} / {fmt_jumlah(g['batas'])} g",
+              f"{fmt_persen(g['persen'])}% · sisa {fmt_jumlah(g['sisa'])} g")
+    m2.metric("🧂 Natrium", f"{fmt_jumlah(n['konsumsi'])} / {fmt_jumlah(n['batas'])} mg",
+              f"{fmt_persen(n['persen'])}% · sisa {fmt_jumlah(n['sisa'])} mg")
+    m3.metric("🥑 Lemak", f"{fmt_jumlah(l['konsumsi'])} / {fmt_jumlah(l['batas'])} g",
+              f"{fmt_persen(l['persen'])}% · sisa {fmt_jumlah(l['sisa'])} g")
+    st.markdown("---")
+    _tabel_produk_editor(r["baris"], "🍽️ Produk pada Tanggal Ini")
+
+    # cadangkan semua data (CSV)
+    with st.expander("💾 Cadangkan / unduh seluruh riwayat (CSV)"):
+        semua = db.get_all_consumption()
+        if semua:
+            df = pd.DataFrame([dict(x) for x in semua])
+            st.download_button("⬇️ Unduh CSV", df.to_csv(index=False).encode("utf-8-sig"),
+                               file_name=f"gizilens_riwayat_{today_iso()}.csv", mime="text/csv")
+        else:
+            st.caption("Belum ada data.")
+
+
+# ===========================================================================
+# 📈 RINGKASAN 7 HARI
+# ===========================================================================
+def halaman_ringkasan():
+    ui.judul_seksi("📈 Ringkasan 7 Hari", "Persentase konsumsi terhadap batas harian (7 hari terakhir).")
+    minggu = tracker.ringkasan_7_hari()
+    df = pd.DataFrame([
+        {"Hari": h["label"], "Gula %": round(h["sugar_persen"], 1),
+         "Natrium %": round(h["sodium_persen"], 1), "Lemak %": round(h["fat_persen"], 1)}
+        for h in minggu["hari"]
+    ])
+    st.bar_chart(df.set_index("Hari"), height=320, color=["#22c55e", "#f59e0b", "#ef4444"])
+    st.caption("Grafik menunjukkan persentase batas harian; nilai di atas 100% = melebihi batas.")
+
+    k1, k2, k3 = st.columns(3)
+    peta = [("sugar_g", "sugar_persen", "🍬 Gula"),
+            ("sodium_mg", "sodium_persen", "🧂 Natrium"),
+            ("fat_g", "fat_persen", "🥑 Lemak")]
+    for kol, (kolom, kunci_persen, nama) in zip((k1, k2, k3), peta):
+        lewat = minggu["lewat"][kolom]
+        baris_terakhir = minggu["hari"][-1]
+        kol.markdown(f"**{nama}**  \nHari melebihi batas: **{lewat} dari 7 hari**  \n"
+                     f"Hari ini: **{fmt_persen(baris_terakhir[kunci_persen])}%**")
+
+    with st.expander("📋 Rincian per hari"):
+        for h in minggu["hari"]:
+            tanda = lambda p: "🔴" if p >= 100 else ("🟡" if p >= 50 else "🟢")
+            st.markdown(
+                f"- **{h['hari_nama']} ({h['label']})** — Gula {tanda(h['sugar_persen'])} "
+                f"{fmt_persen(h['sugar_persen'])}% · Natrium {tanda(h['sodium_persen'])} "
+                f"{fmt_persen(h['sodium_persen'])}% · Lemak {tanda(h['fat_persen'])} "
+                f"{fmt_persen(h['fat_persen'])}%")
+
+
+# ===========================================================================
+# 📖 EDUKASI
+# ===========================================================================
+def halaman_edukasi():
+    ui.judul_seksi("📖 Edukasi GGL", "Gula, Garam (Natrium) & Lemak")
+    st.markdown("""
+**Apa itu GGL?**  GGL = **Gula, Garam, Lemak** — tiga zat gizi yang paling sering
+berlebih pada makanan & minuman kemasan dan berkaitan dengan risiko obesitas,
+diabetes, hipertensi, dan penyakit jantung.
+
+#### Batas konsumsi harian (dewasa)
+| Zat | Batas/hari | Setara |
+|---|---|---|
+| 🍬 Gula | 50 g | ± 4 sendok makan |
+| 🧂 Garam/Natrium | 2.000 mg natrium | ± 1 sendok teh garam (5 g) |
+| 🥑 Lemak | 67 g | ± 5 sendok makan |
+
+*Sumber: Permenkes RI No. 30 Tahun 2013 (informasi GGL pada pangan olahan) &
+rekomendasi WHO. Kebutuhan tiap orang bisa berbeda.*
+
+#### Arti warna
+- 🟢 **Hijau** — konsumsi masih di bawah 50% batas harian: aman.
+- 🟡 **Kuning** — sudah 50–99%: mulai perhatikan konsumsi berikutnya.
+- 🔴 **Merah** — sudah ≥100%: melebihi batas harian; batasi asupan lain.
+
+#### Tips
+1. Baca label **Informasi Nilai Gizi** sebelum membeli/mengonsumsi.
+2. Perhatikan **takaran saji** — satu kemasan bisa berisi beberapa sajian!
+3. Batasi minuman manis, camilan asin, dan gorengan dalam sehari.
+4. Utamakan air putih, buah, sayur, dan makanan segar.
+""")
+    with st.expander("📄 Cara memakai GiziLens"):
+        st.markdown("""
+1. **📷 Scan Produk** → foto label Informasi Nilai Gizi (atau pilih foto dari galeri).
+2. **🔎 Periksa hasil** → pastikan angka gula/natrium/lemak sesuai label; edit kalau perlu.
+3. **🍽️ Pilih jumlah sajian** yang benar-benar kamu konsumsi (bisa 0.5, 1, 1.5, dst).
+4. Lihat **dampaknya** ke total harian sebelum memutuskan.
+5. Tekan **➕ Tambahkan ke GGL Hari Ini** — data tersimpan di database lokal.
+6. Pantau **📊 GGL Hari Ini**, **📅 Riwayat**, dan **📈 Ringkasan 7 Hari**.
+""")
+
+
+# ===========================================================================
+# ℹ️ TENTANG
+# ===========================================================================
+def halaman_tentang():
+    ui.judul_seksi("ℹ️ Tentang GiziLens")
+    st.markdown(f"""
+**GiziLens** adalah alat edukasi & pencatatan konsumsi GGL (Gula, Garam/Natrium,
+Lemak) dari label Informasi Nilai Gizi makanan/minuman kemasan.
+
+- **Pembacaan label**: kamera + AI/OCR. Jika kunci `GEMINI_API_KEY` terpasang di
+  pengaturan aplikasi, foto dikirim ke **AI Vision Google (Gemini)** untuk dibaca —
+  kalau tidak, dipakai OCR lokal di server (foto tidak disimpan setelah diproses).
+- **Penyimpanan**: SQLite lokal (`data/gizilens.db`) — riwayat tetap tersimpan saat
+  aplikasi ditutup/refresh; tidak dikirim ke layanan eksternal.
+""")
+    if db.lokasi_db_cadangan():
+        st.warning("ℹ️ Saat ini database tersimpan di folder sementara server "
+                   "(folder aplikasi tidak bisa ditulis). Data bisa hilang jika server mati — "
+                   "gunakan tombol unduh CSV di halaman Riwayat untuk cadangan.")
+    st.markdown("""
+#### Sumber batas GGL
+- **Permenkes RI No. 30 Tahun 2013** — Informasi Kandungan Gula, Garam, dan Lemak
+  untuk Pangan Olahan & Pangan Siap Saji (gula ≤ 50 g, natrium ≤ 2.000 mg,
+  lemak ≤ 67 g per hari).
+- **WHO** — rekomendasi gula < 10% energi & natrium < 2.000 mg/hari.
+- AAL energi 2.150 kkal dipakai label pangan Indonesia (BPOM) untuk %AKG.
+
+#### ⚠️ Disclaimer
+GiziLens merupakan **alat edukasi dan pencatatan konsumsi**.
+
+Hasil dihitung berdasarkan informasi nilai gizi pada label produk dan jumlah
+konsumsi yang dicatat pengguna. Hasil pembacaan AI/OCR dapat mengalami kesalahan —
+selalu periksa kembali hasil scan dengan label asli produk. Batas konsumsi yang
+digunakan merupakan acuan umum dan kebutuhan setiap individu dapat berbeda.
+GiziLens **tidak digunakan untuk diagnosis** atau menggantikan konsultasi dengan
+dokter maupun ahli gizi.
+
+*Dikembangkan oleh {config.ORG}. © 2026*
+""")
+
+
+# ===========================================================================
+# ROUTER UTAMA
+# ===========================================================================
+sidebar()
+halaman = st.session_state.nav
+if halaman.startswith("🏠"):
+    halaman_beranda()
+elif halaman.startswith("📷"):
+    halaman_scan()
+elif halaman.startswith("📊"):
+    halaman_ggl_hari_ini()
+elif halaman.startswith("📅"):
+    halaman_riwayat()
+elif halaman.startswith("📈"):
+    halaman_ringkasan()
+elif halaman.startswith("📖"):
+    halaman_edukasi()
 else:
-    tahap_hasil()
+    halaman_tentang()
 
-st.markdown(
-    '<div class="footer-app">Aplikasi Nutri Level · foto diproses otomatis untuk membaca label '
-    '&amp; tidak disimpan · dibuat oleh Sub Departemen Gizi RSPAL dr. Ramelan · © 2026</div>',
-    unsafe_allow_html=True,
-)
+ui.footer()
