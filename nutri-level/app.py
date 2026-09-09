@@ -226,6 +226,12 @@ def bagian_pengaturan():
         st.session_state.ambang["danger"] = d2.number_input(
             "🔴 Merah mulai dari (%)", 1.0, 300.0, st.session_state.ambang["danger"], 1.0, format="%g"
         )
+        st.caption(
+            "📚 Sumber batas harian: Permenkes RI No. 30 Tahun 2013 tentang "
+            "Informasi Kandungan Gula, Garam, dan Lemak (gula ≤ 50 g/hari ≈ 4 sdm, "
+            "natrium ≤ 2.000 mg/hari ≈ 1 sdt garam, lemak ≤ 67 g/hari ≈ 5 sdm) — "
+            "sejalan dengan rekomendasi WHO."
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -467,7 +473,16 @@ def tahap_hasil():
             f"- 🟢 Hijau: 0–{_fmt_persen(st.session_state.ambang['warning'] - 1)}% batas harian\n"
             f"- 🟡 Kuning: {_fmt_persen(st.session_state.ambang['warning'])}–"
             f"{_fmt_persen(st.session_state.ambang['danger'] - 1)}%\n"
-            f"- 🔴 Merah: ≥ {_fmt_persen(st.session_state.ambang['danger'])}%"
+            f"- 🔴 Merah: ≥ {_fmt_persen(st.session_state.ambang['danger'])}%\n\n"
+            "**📚 Sumber:**\n"
+            "- Batas gula, natrium & lemak: **Permenkes RI No. 30 Tahun 2013** "
+            "(Informasi Kandungan Gula, Garam, dan Lemak untuk Pangan Olahan & "
+            "Pangan Siap Saji) — gula ≤ 50 g (≈4 sdm), natrium ≤ 2.000 mg (≈1 sdt garam), "
+            "lemak ≤ 67 g (≈5 sdm) per orang per hari.\n"
+            "- Nilai ini sejalan dengan rekomendasi **WHO** (gula < 10% energi, "
+            "natrium < 2.000 mg/hari).\n"
+            "- Angka Acuan Label (AAL) energi **2.150 kkal** dipakai label pangan "
+            "Indonesia (BPOM) untuk menghitung %AKG."
         )
 
     st.markdown("---")
