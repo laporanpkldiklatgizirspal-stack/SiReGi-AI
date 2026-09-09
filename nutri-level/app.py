@@ -309,10 +309,14 @@ def tahap_konfirmasi():
             "Kamu tetap bisa memakai aplikasi: isi nilai langsung dari label di bawah ini."
         )
     else:
-        if scan.get("_sumber") == "gemini":
-            st.caption("🤖 Dibaca dengan AI Vision (Gemini).")
+        if str(scan.get("_sumber", "")).startswith("gemini"):
+            model = str(scan.get("_sumber")).split(":", 1)[-1]
+            st.caption(f"🤖 Dibaca dengan AI Vision Gemini ({model}).")
         else:
             st.caption("🤖 Dibaca dengan OCR.")
+        if scan.get("_gemini_error"):
+            with st.expander("🤖 Catatan AI Vision (gagal, dipakai OCR cadangan)"):
+                st.caption(str(scan.get("_gemini_error")))
         baris = scan.get("_baris") or []
         if baris:
             with st.expander("📄 Teks mentah yang terbaca mesin"):
