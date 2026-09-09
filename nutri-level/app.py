@@ -52,7 +52,23 @@ CSS = f"""
       radial-gradient(1100px 460px at 88% -8%, #EAF1FB 0%, rgba(234,241,251,0) 60%),
       linear-gradient(180deg, #F7FAFD 0%, #F1F6FC 100%);
   }}
+  [data-testid="stAppViewContainer"] {{
+    background:
+      radial-gradient(1100px 460px at 88% -8%, #EAF1FB 0%, rgba(234,241,251,0) 60%),
+      linear-gradient(180deg, #F7FAFD 0%, #F1F6FC 100%) !important;
+  }}
   [data-testid="stHeader"] {{ background: transparent; }}
+
+  /* ---------- Kamera: bingkai rapi, bukan kotak "cekung" ---------- */
+  [data-testid="stCameraInput"] {{
+    border: 1px solid #D8E6F5 !important;
+    border-radius: 18px !important;
+    overflow: hidden;
+    box-shadow: 0 4px 14px rgba(10,46,110,.08);
+  }}
+  [data-testid="stCameraInput"] video {{
+    object-fit: cover;
+  }}
   h1, h2, h3 {{ color: {BIRU_TUA}; }}
 
   /* ---------- Hero ---------- */
