@@ -1,7 +1,8 @@
-# Recall Gizi + Master TKPI — Paket Deploy Web
+# Recall Gizi + Master TKPI + Nutri Level — Paket Deploy Web
 
 Aplikasi Recall Gizi (input recall 24 jam ala NutriSurvey + AI ketik makanan +
-Buku Foto Porsi) dan Master TKPI (database bahan makanan, dilindungi login).
+Buku Foto Porsi), Master TKPI (database bahan makanan, dilindungi login), dan
+Nutri Level (scan label Informasi Nilai Gizi → level 🟢🟡🔴 gula/natrium/lemak).
 
 ## Isi folder
 
