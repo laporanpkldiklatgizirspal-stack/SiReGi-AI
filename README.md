@@ -18,6 +18,11 @@ recall-gizi-web/
 │   ├── utils/
 │   ├── data/
 │   └── requirements.txt
+├── nutri-level/ -> Aplikasi NUTRI LEVEL (scan label gizi -> level 🟢🟡🔴)
+│   ├── app.py
+│   ├── nutri_core.py
+│   ├── assets/logo_rspal.png
+│   └── requirements.txt
 ├── .gitignore
 └── README.md
 ```
