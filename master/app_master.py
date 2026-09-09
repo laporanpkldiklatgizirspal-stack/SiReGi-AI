@@ -153,6 +153,15 @@ CSS = f"""
   }}
   .footer-app {{ text-align: center; color: {ABU}; font-size: 11.5px; margin-top: 26px;
     padding-top: 12px; border-top: 1px dashed #D7E3F0; }}
+
+  /* ---------- Mode premium: sembunyikan branding Streamlit ---------- */
+  header[data-testid="stHeader"] {{ display: none !important; }}
+  [data-testid="stToolbar"] {{ display: none !important; }}
+  [data-testid="stAppDeployButton"] {{ display: none !important; }}
+  [data-testid="stDecoration"] {{ display: none !important; }}
+  #MainMenu {{ visibility: hidden !important; }}
+  footer {{ visibility: hidden !important; }}
+  .block-container {{ padding-top: 1rem !important; }}
 </style>
 """
 st.markdown(CSS, unsafe_allow_html=True)
