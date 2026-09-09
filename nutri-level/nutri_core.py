@@ -298,7 +298,9 @@ _OCR_ENGINE = None
 _OCR_GAGAL = None
 _OCR_TERAKHIR = None
 
-# (nama_package, nama_kelas) — urutan prioritas
+# (nama_package, nama_kelas) — urutan prioritas.
+# 'rapidocr' DIKEMAS lokal di folder rapidocr/ (agar cloud tidak butuh
+# opencv-python full/libGL); 'rapidocr_onnxruntime' tetap dicoba sbg cadangan.
 _ENGINE_CANDIDATES = [
     ("rapidocr", "RapidOCR"),
     ("rapidocr_onnxruntime", "RapidOCR"),
