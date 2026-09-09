@@ -316,7 +316,10 @@ def _dapat_engine():
     masalah = []
     for nama_mod, nama_cls in _ENGINE_CANDIDATES:
         try:
-            mod = __import__(nama_mod, fromlist=[nama_cls])
+            if nama_mod == "rapidocr":
+                mod = _impor_rapidocr_dari_folder_mirip_cloud()
+            else:
+                mod = __import__(nama_mod, fromlist=[nama_cls])
             _OCR_ENGINE = getattr(mod, nama_cls)()
             _OCR_TERAKHIR = nama_mod
             return _OCR_ENGINE
@@ -331,6 +334,50 @@ def _dapat_engine():
         + f" | python {sys.version.split()[0]}"
     )
     raise RuntimeError(_OCR_GAGAL)
+
+
+def _impor_rapidocr_dari_folder_mirip_cloud():
+    """rapidocr DIKEMAS di folder aplikasi (nutri-level/rapidocr).
+
+    Di Streamlit Cloud folder repo bisa read-only, padahal mesin OCR perlu
+    menulis model yang belum ada (auto-download). Kalau folder models-nya
+    tidak bisa ditulis -> salin seluruh package ke folder temp (writable)
+    lalu import dari sana. Kalau bisa ditulis -> import biasa.
+    """
+    import importlib
+    import shutil
+    import sys
+    import tempfile
+
+    try:
+        mod = importlib.import_module("rapidocr")
+    except Exception:
+        return None
+    try:
+        pkg_dir = os.path.dirname(mod.__file__)
+        models_dir = os.path.join(pkg_dir, "models")
+        uji = os.path.join(models_dir, ".tulis_uji")
+        with open(uji, "w") as fh:
+            fh.write("x")
+        os.remove(uji)
+        return mod  # writable — pakai langsung
+    except Exception:
+        pass  # read-only → salin ke temp
+
+    cache = os.path.join(tempfile.gettempdir(), "rapidocr_vendor")
+    try:
+        if os.path.exists(cache):
+            shutil.rmtree(cache, ignore_errors=True)
+        shutil.copytree(pkg_dir, cache)
+        for k in [k for k in list(sys.modules)
+                  if k == "rapidocr" or k.startswith("rapidocr.")]:
+            sys.modules.pop(k, None)
+        parent = os.path.dirname(cache)
+        if parent not in sys.path:
+            sys.path.insert(0, parent)
+        return importlib.import_module("rapidocr")
+    except Exception:
+        return mod
 
 
 def ocr_ke_baris(byte_gambar: bytes):
@@ -370,6 +417,7 @@ def ocr_ke_baris(byte_gambar: bytes):
 # ---------------------------------------------------------------------------
 _PROMPT_GEMINI = """\
 Kamu adalah pembaca label Informasi Nilai Gizi (nutrition facts) yang teliti.
+Label bisa ditulis 2 bahasa (Indonesia + Inggris) dengan kolom %AKG/%DV — ABAIKAN kolom persen.
 Baca label pada foto, lalu jawab HANYA JSON valid tanpa teks lain:
 {
   "nama_produk": "nama produk atau null",
@@ -384,40 +432,66 @@ Baca label pada foto, lalu jawab HANYA JSON valid tanpa teks lain:
 }
 Aturan:
 - Nilai sesuai TAKARAN SAJI yang tercetak (bukan per 100 g, kecuali label memang per 100 g).
+- Gula = Gula/Gula Total/Sugars/Total Sugars (JANGAN gula alkohol).
+- Natrium = Natrium/Garam (Natrium)/Sodium/Salt.
+- Lemak = Lemak Total/Total Fat (JANGAN lemak jenuh/trans).
 - Kalau satu angka tidak terbaca/ragu, isi null (bukan perkiraan).
-- Gula = Total Gula/Sugars; Natrium = Natrium/Sodium; Lemak = Lemak Total/Total Fat.
 - Angka pakai titik desimal (contoh 4.5)."""
+
+# Nama model Gemini yang dicoba berurutan (2026: 2.0 bisa sudah pensiun)
+_GEMINI_MODELS = [
+    "gemini-2.5-flash",
+    "gemini-2.5-flash-lite",
+    "gemini-2.0-flash",
+    "gemini-flash-latest",
+]
+
+
+class GeminiGagal(Exception):
+    pass
 
 
 def _gemini_baca(byte_gambar: bytes, api_key: str):
     b64 = base64.b64encode(byte_gambar).decode()
-    url = (
-        "https://generativelanguage.googleapis.com/v1beta/models/"
-        f"gemini-2.0-flash:generateContent?key={api_key}"
-    )
-    payload = {
-        "contents": [
-            {
-                "parts": [
-                    {"text": _PROMPT_GEMINI},
-                    {"inline_data": {"mime_type": "image/png", "data": b64}},
-                ]
-            }
-        ],
-        "generationConfig": {"temperature": 0.0, "maxOutputTokens": 1024},
-    }
-    req = urllib.request.Request(
-        url,
-        data=json.dumps(payload).encode(),
-        headers={"Content-Type": "application/json"},
-    )
-    with urllib.request.urlopen(req, timeout=45) as resp:
-        data = json.loads(resp.read().decode())
-    teks = data["candidates"][0]["content"]["parts"][0]["text"]
-    awal, akhir = teks.find("{"), teks.rfind("}")
-    if awal == -1 or akhir == -1:
-        return None
-    return json.loads(teks[awal:akhir + 1])
+    kendala = []
+    for model in _GEMINI_MODELS:
+        url = (
+            "https://generativelanguage.googleapis.com/v1beta/models/"
+            f"{model}:generateContent?key={api_key}"
+        )
+        payload = {
+            "contents": [
+                {
+                    "parts": [
+                        {"text": _PROMPT_GEMINI},
+                        {"inline_data": {"mime_type": "image/png", "data": b64}},
+                    ]
+                }
+            ],
+            "generationConfig": {"temperature": 0.0, "maxOutputTokens": 1024},
+        }
+        req = urllib.request.Request(
+            url,
+            data=json.dumps(payload).encode(),
+            headers={"Content-Type": "application/json"},
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=60) as resp:
+                data = json.loads(resp.read().decode())
+            teks = data["candidates"][0]["content"]["parts"][0]["text"]
+            awal, akhir = teks.find("{"), teks.rfind("}")
+            if awal == -1 or akhir == -1:
+                raise ValueError("jawaban bukan JSON")
+            return json.loads(teks[awal:akhir + 1]), model
+        except urllib.error.HTTPError as e:
+            try:
+                pesan = json.loads(e.read().decode()).get("error", {}).get("message", "")
+            except Exception:
+                pesan = ""
+            kendala.append(f"{model}: HTTP {e.code} {pesan}")
+        except Exception as exc:
+            kendala.append(f"{model}: {type(exc).__name__}: {exc}")
+    raise GeminiGagal(" ; ".join(kendala))
 
 
 def _gemini_ke_hasil(data: dict) -> dict:
@@ -433,13 +507,13 @@ def _gemini_ke_hasil(data: dict) -> dict:
         "lemak": None,
     }
     peta = {
-        "sajian_per_kemasan": ("sajian_per_kemasan", "servings_per_package"),
-        "energi": ("energi_total_kkal", "energi_kkal", "energy_kcal"),
+        "sajian_per_kemasan": ("sajian_per_kemasan", "jumlah_sajian_per_kemasan", "servings_per_package", "sajian"),
+        "energi": ("energi_total_kkal", "energi_kkal", "energy_kcal", "energi"),
         "protein": ("protein_g", "protein"),
-        "karbohidrat": ("karbohidrat_total_g", "carbohydrate_g"),
-        "gula": ("gula_g", "sugar_g", "sugars_g"),
-        "natrium": ("natrium_mg", "sodium_mg"),
-        "lemak": ("lemak_total_g", "fat_g"),
+        "karbohidrat": ("karbohidrat_total_g", "carbohydrate_g", "karbohidrat"),
+        "gula": ("gula_g", "gula_total_g", "sugar_g", "total_sugar_g", "sugars_g"),
+        "natrium": ("natrium_mg", "sodium_mg", "garam_natrium_mg", "salt_mg", "natrium", "sodium"),
+        "lemak": ("lemak_total_g", "fat_total_g", "total_fat_g", "lemak_g", "fat_g", "lemak"),
     }
     for kunci, kandidat in peta.items():
         for k in kandidat:
@@ -470,14 +544,35 @@ def read_nutrition_label(byte_gambar: bytes, gemini_key: Optional[str] = None) -
     """
     if gemini_key:
         try:
-            data = _gemini_baca(byte_gambar, gemini_key)
+            data, model = _gemini_baca(byte_gambar, gemini_key)
             if data:
                 hasil = _gemini_ke_hasil(data)
-                hasil["_sumber"] = "gemini"
+                hasil["_sumber"] = f"gemini:{model}"
                 hasil["_baris"] = []
                 return hasil
-        except Exception:
-            pass  # jatuh ke OCR lokal
+        except GeminiGagal as exc:
+            hasil = None
+            catatan = str(exc)
+        except Exception as exc:
+            hasil = None
+            catatan = f"{type(exc).__name__}: {exc}"
+        # Gemini gagal -> jatuh ke OCR lokal, tapi catat alasannya
+        try:
+            baris = ocr_ke_baris(byte_gambar)
+            hasil = parse_label_baris(baris)
+            hasil["_sumber"] = "ocr"
+            hasil["_baris"] = baris
+            hasil["_gemini_error"] = catatan
+            return hasil
+        except Exception as exc:
+            return {
+                "gula": None, "natrium": None, "lemak": None,
+                "protein": None, "karbohidrat": None, "energi": None,
+                "takaran_saji": None, "sajian_per_kemasan": 1, "nama_produk": None,
+                "_baris": [], "_sumber": "gagal",
+                "_gemini_error": catatan,
+                "_ocr_error": str(exc),
+            }
 
     baris = ocr_ke_baris(byte_gambar)
     hasil = parse_label_baris(baris)
