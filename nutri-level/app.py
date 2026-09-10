@@ -23,7 +23,8 @@ import pengaturan as setel
 import nutrition_tracker as tracker
 import nutrition_ui as ui
 from nutrition_calculator import badge, dampak_penambahan, nilai_dikonsumsi, ringkas_garam, ringkas_zat
-from nutrition_reader import kunci_gemini_dari_secrets, nama_default_produk, read_label
+from nutrition_reader import (kunci_gemini_dari_secrets, nama_default_produk, read_label,
+                              ringkas_auto)
 from utils import (fmt_jumlah, fmt_persen, now_time, parse_float,
                    salt_gram, tanggal_id, today_iso)
 
@@ -219,17 +220,22 @@ def halaman_beranda():
 # ===========================================================================
 # 📷 SCAN PRODUK
 # ===========================================================================
-def _proses_foto(byte_img: bytes):
+def _proses_foto(byte_img: bytes, byte_tambahan: list | None = None):
     st.success("✅ Foto berhasil diambil.")
-    with st.spinner("Sedang membaca informasi nilai gizi..."):
+    kabar = "Sedang membaca informasi nilai gizi"
+    if byte_tambahan:
+        kabar += f" dari {1 + len(byte_tambahan)} foto"
+    with st.spinner(kabar + "..."):
         try:
-            hasil = read_label(byte_img, gemini_key=kunci_gemini_dari_secrets())
+            hasil = read_label(byte_img, gemini_key=kunci_gemini_dari_secrets(),
+                               gambar_tambahan=byte_tambahan)
         except Exception as exc:
             hasil = {
                 "nama_produk": None, "takaran_saji": None, "sajian_per_kemasan": 1,
-                "gula": None, "natrium": None, "lemak": None,
+                "gula": None, "natrium": None, "lemak": None, "lemak_jenuh": None,
                 "protein": None, "karbohidrat": None, "energi": None,
                 "_baris": [], "_sumber": "gagal", "_ocr_error": str(exc),
+                "_kurang": ["nama_produk", "takaran_saji", "gula", "natrium", "lemak", "lemak_jenuh"],
             }
     st.session_state.scan = hasil
     st.session_state.added_ok = False
@@ -311,10 +317,14 @@ def halaman_scan():
             "Foto dulu pakai kamera HP biasa, lalu pilih fotonya di bawah — hasilnya sama.</div>",
             unsafe_allow_html=True,
         )
-        unggah = st.file_uploader("Pilih foto label dari kamera HP / galeri",
-                                  type=["jpg", "jpeg", "png"], key="upl")
+        unggah = st.file_uploader(
+            "Pilih 1–3 foto label (boleh beberapa: kemasan depan + tabel gizi)",
+            type=["jpg", "jpeg", "png"], key="upl", accept_multiple_files=True)
         if unggah is not None:
-            _proses_foto(unggah.getvalue())
+            berkas = [u for u in unggah if u is not None]
+            if berkas:
+                _proses_foto(berkas[0].getvalue(),
+                             [b.getvalue() for b in berkas[1:]] or None)
         return
 
     # ---------------- tahap konfirmasi + konsumsi ----------------
@@ -331,6 +341,27 @@ def halaman_scan():
                 st.caption(str(scan.get("_gemini_error")))
     else:
         st.warning("🤖 Pembaca label bermasalah — isi manual sesuai label kemasan.")
+
+    # ---- ringkasan berapa item yang terisi otomatis (biar jelas mana yang perlu diisi) ----
+    _auto = ringkas_auto(scan)
+    if sumber != "gagal":
+        if _auto["kurang"]:
+            st.markdown(
+                f'<div class="kartu-warning">🤖 <b>Terisi otomatis: {_auto["terisi"]} dari '
+                f'{_auto["total"]} item.</b> Perlu diisi manual: <b>{_auto["label_kurang"]}</b>.<br>'
+                "Kalau labelnya kecil/berbayang: foto ulang lebih dekat, atau tambahkan foto bagian "
+                "tabel gizinya (boleh pilih 2–3 foto sekaligus).</div>",
+                unsafe_allow_html=True)
+        else:
+            st.markdown(
+                f'<div class="kartu-info">🤖 <b>Semua {_auto["total"]} item terisi otomatis</b> '
+                f'(nama produk, takaran saji, gula, natrium, lemak, lemak jenuh) — tetap periksa dengan '
+                "label asli ya.</div>",
+                unsafe_allow_html=True)
+        if scan.get("_jumlah_foto"):
+            st.caption(f"📸 Digabung dari {scan['_jumlah_foto']} foto.")
+        if "(2 putaran)" in sumber:
+            st.caption("🔁 AI membaca ulang sekali lagi untuk mengisi angka yang belum terbaca.")
 
     baris_ocr = scan.get("_baris") or []
     if baris_ocr:
