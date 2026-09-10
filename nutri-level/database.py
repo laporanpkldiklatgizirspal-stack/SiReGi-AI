@@ -59,10 +59,21 @@ CREATE TABLE IF NOT EXISTS daily_consumption (
     sugar_g REAL DEFAULT 0,
     sodium_mg REAL DEFAULT 0,
     salt_g REAL DEFAULT 0,
-    fat_g REAL DEFAULT 0
+    fat_g REAL DEFAULT 0,
+    saturated_fat_g REAL DEFAULT 0,
+    nutri_level TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_daily_date ON daily_consumption(date);
 """
+
+
+def _migrasi(kon: sqlite3.Connection) -> None:
+    """Tambah kolom baru ke database lama (tanpa menghapus data yang sudah ada)."""
+    kolom = {baris[1] for baris in kon.execute("PRAGMA table_info(daily_consumption)")}
+    if "saturated_fat_g" not in kolom:
+        kon.execute("ALTER TABLE daily_consumption ADD COLUMN saturated_fat_g REAL DEFAULT 0")
+    if "nutri_level" not in kolom:
+        kon.execute("ALTER TABLE daily_consumption ADD COLUMN nutri_level TEXT")
 
 
 def init_database(jalur_db: Path | None = None) -> Path:
@@ -75,6 +86,7 @@ def init_database(jalur_db: Path | None = None) -> Path:
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     with sqlite3.connect(DB_PATH) as kon:
         kon.executescript(_SCHEMA)
+        _migrasi(kon)
     return DB_PATH
 
 
@@ -89,18 +101,20 @@ def _koneksi() -> sqlite3.Connection:
 # ---------------------------------------------------------------------------
 def add_consumption(date: str, time: str, product_name: str, serving_size: str,
                     consumed_servings: float, sugar_g: float = 0.0,
-                    sodium_mg: float = 0.0, fat_g: float = 0.0) -> int:
+                    sodium_mg: float = 0.0, fat_g: float = 0.0,
+                    saturated_fat_g: float = 0.0, nutri_level: str | None = None) -> int:
     from utils import salt_gram
     salt = salt_gram(float(sodium_mg or 0))
     with _koneksi() as kon:
         cur = kon.execute(
             """INSERT INTO daily_consumption
                (date, time, product_name, serving_size, consumed_servings,
-                sugar_g, sodium_mg, salt_g, fat_g)
-               VALUES (?,?,?,?,?,?,?,?,?)""",
+                sugar_g, sodium_mg, salt_g, fat_g, saturated_fat_g, nutri_level)
+               VALUES (?,?,?,?,?,?,?,?,?,?,?)""",
             (date, time, product_name or "", serving_size or "",
              float(consumed_servings), float(sugar_g or 0),
-             float(sodium_mg or 0), salt, float(fat_g or 0)),
+             float(sodium_mg or 0), salt, float(fat_g or 0),
+             float(saturated_fat_g or 0), nutri_level),
         )
         return int(cur.lastrowid)
 
@@ -151,7 +165,9 @@ def get_all_consumption() -> list[sqlite3.Row]:
 def update_consumption(record_id: int, consumed_servings: float | None = None,
                        sugar_g: float | None = None, sodium_mg: float | None = None,
                        fat_g: float | None = None, product_name: str | None = None,
-                       serving_size: str | None = None) -> None:
+                       serving_size: str | None = None,
+                       saturated_fat_g: float | None = None,
+                       nutri_level: str | None = None) -> None:
     from utils import salt_gram
     set_ = []
     nilai = []
@@ -174,6 +190,12 @@ def update_consumption(record_id: int, consumed_servings: float | None = None,
     if serving_size is not None:
         set_.append("serving_size = ?")
         nilai.append(serving_size)
+    if saturated_fat_g is not None:
+        set_.append("saturated_fat_g = ?")
+        nilai.append(float(saturated_fat_g))
+    if nutri_level is not None:
+        set_.append("nutri_level = ?")
+        nilai.append(nutri_level)
     if not set_:
         return
     nilai.append(int(record_id))
