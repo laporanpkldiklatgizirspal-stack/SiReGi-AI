@@ -19,9 +19,37 @@ ALIAS_LABEL = {
 }
 
 
-def read_label(byte_gambar: bytes, gemini_key: str | None = None) -> dict:
-    """Baca label dari byte gambar (PNG/JPEG)."""
-    return _core.read_nutrition_label(byte_gambar, gemini_key=gemini_key)
+def read_label(byte_gambar: bytes, gemini_key: str | None = None,
+               gambar_tambahan: list | None = None) -> dict:
+    """Baca label dari 1..N foto (PNG/JPEG). Foto tambahan dipakai untuk melengkapi angka."""
+    return _core.read_nutrition_label(byte_gambar, gemini_key=gemini_key,
+                                      gambar_tambahan=gambar_tambahan)
+
+
+NAMA_FIELD = {
+    "nama_produk": "nama produk",
+    "takaran_saji": "takaran saji",
+    "gula": "gula",
+    "natrium": "natrium",
+    "lemak": "lemak total",
+    "lemak_jenuh": "lemak jenuh",
+}
+
+
+def ringkas_auto(hasil: dict) -> dict:
+    """Ringkasan: berapa item yang terisi otomatis & mana yang masih perlu diisi."""
+    kurang = list((hasil or {}).get("_kurang") or [])
+    if not kurang and "_kurang" not in (hasil or {}):
+        kurang = [k for k, _ in NAMA_FIELD.items() if (hasil or {}).get(k) in (None, "")]
+    total = len(NAMA_FIELD)
+    terisi = total - len(kurang)
+    return {
+        "terisi": terisi,
+        "total": total,
+        "kurang": kurang,
+        "label_terisi": ", ".join(NAMA_FIELD[k] for k in NAMA_FIELD if k not in kurang),
+        "label_kurang": ", ".join(NAMA_FIELD.get(k, k) for k in kurang),
+    }
 
 
 def kunci_gemini_dari_secrets():
