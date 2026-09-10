@@ -607,7 +607,9 @@ def read_nutrition_label(byte_gambar: bytes, gemini_key: Optional[str] = None) -
     hasil = parse_label_baris(baris)
     hasil["_sumber"] = "ocr"
     hasil["_baris"] = baris
-    if not hasil.get("nama_produk"):
+    # tebak nama produk hanya kalau angka gizinya kebaca (kalau OCR kacau, nama bisa sampah)
+    if not hasil.get("nama_produk") and sum(
+            1 for k in ("gula", "natrium", "lemak") if hasil.get(k) is not None) >= 2:
         hasil["nama_produk"] = tebak_nama_produk(baris)
     return hasil
 
