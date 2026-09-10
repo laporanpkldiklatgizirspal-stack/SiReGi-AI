@@ -18,8 +18,10 @@ import streamlit as st
 
 import config
 import database as db
+import kesesuaian as cek
 import nutri_level as nl
 import pengaturan as setel
+import profil as prof
 import nutrition_tracker as tracker
 import nutrition_ui as ui
 from nutrition_calculator import badge, dampak_penambahan, nilai_dikonsumsi, ringkas_garam, ringkas_zat
@@ -41,6 +43,7 @@ st.markdown(ui.css() + ui.css_nutri_level() + ui.css_desain_a(), unsafe_allow_ht
 NAV = [
     "🏠 Beranda",
     "📷 Scan Produk",
+    "👤 Profil Saya",
     "📊 GGL Hari Ini",
     "📅 Riwayat",
     "📈 Ringkasan",
@@ -89,6 +92,92 @@ def _kartu_3(html_list: list[str]):
     kolom = st.columns(len(html_list))
     for k, h in zip(kolom, html_list):
         k.markdown(h, unsafe_allow_html=True)
+
+
+# ===========================================================================
+# 👤 PROFIL SAYA
+# ===========================================================================
+def halaman_profil():
+    ui.judul_seksi("👤 Profil Saya", "Isi sekali saja — aplikasi otomatis menilai "
+                                     "kelayakan produk untukmu setiap kali scan.")
+    d = prof.muat()
+
+    k1, k2 = st.columns(2)
+    nama = k1.text_input("Nama (opsional)", value=str(d.get("nama", "")), key="pf_nama")
+    umur = k2.number_input("Umur (tahun)", 5, 100, int(d.get("umur", 25) or 25), 1, key="pf_umur")
+    k3, k4, k5 = st.columns(3)
+    jk = k3.selectbox("Jenis kelamin", ["Perempuan", "Laki-laki"],
+                      index=0 if str(d.get("jenis_kelamin", "Perempuan")) == "Perempuan" else 1,
+                      key="pf_jk")
+    tinggi = k4.number_input("Tinggi (cm)", 80.0, 220.0, float(d.get("tinggi_cm", 160) or 160),
+                             0.5, key="pf_tb")
+    berat = k5.number_input("Berat (kg)", 20.0, 200.0, float(d.get("berat_kg", 55) or 55),
+                            0.5, key="pf_bb")
+
+    st.markdown("#### 🩺 Kondisi yang perlu diperhatikan")
+    st.caption("Pilih yang sesuai (boleh lebih dari satu, boleh kosong). Ini yang dipakai untuk "
+               "menilai kelayakan produk serta memberi saran.")
+    kondisi = []
+    kolom = st.columns(2)
+    for i, kunci in enumerate(cek.KONDISI_ATURAN):
+        atur = cek.KONDISI_ATURAN[kunci]
+        with kolom[i % 2]:
+            if st.checkbox(f"{atur['emoji']} {atur['nama']}",
+                           value=kunci in (d.get("kondisi") or []), key=f"pf_k_{kunci}"):
+                kondisi.append(kunci)
+
+    tujuan = st.radio("Tujuan", ["menurunkan", "menjaga", "menambah"], horizontal=True,
+                      index=["menurunkan", "menjaga", "menambah"].index(d.get("tujuan", "menjaga"))
+                      if d.get("tujuan", "menjaga") in ["menurunkan", "menjaga", "menambah"] else 1,
+                      key="pf_tujuan")
+
+    if st.button("💾 Simpan profil", type="primary", use_container_width=True):
+        ok = prof.simpan({"nama": nama, "umur": umur, "jenis_kelamin": jk, "tinggi_cm": tinggi,
+                          "berat_kg": berat, "kondisi": kondisi, "tujuan": tujuan})
+        st.success("Profil tersimpan ✅" if ok else
+                   "Gagal menyimpan (folder aplikasi tidak bisa ditulis di server ini).")
+        st.rerun()
+
+    st.markdown("---")
+    imt = prof.imt({"tinggi_cm": tinggi, "berat_kg": berat})
+    if imt:
+        if imt < 18.5:
+            ket = "berat kurang"
+        elif imt < 23:
+            ket = "normal (Asia)"
+        elif imt < 25:
+            ket = "berisiko lebih"
+        else:
+            ket = "obesitas"
+        st.markdown(f"**IMT (Indeks Massa Tubuh):** {fmt_jumlah(imt)} kg/m² · {ket}")
+        st.caption("IMT hanya gambaran umum; kebutuhan gizi tetap perlu penilaian perorangan.")
+
+    st.markdown("#### 🔎 Yang akan dicek untukmu")
+    if kondisi:
+        baris = []
+        for kunci in kondisi:
+            atur = cek.KONDISI_ATURAN[kunci]
+            baris.append({
+                "Kondisi": f"{atur['emoji']} {atur['nama']}",
+                "Zat yang diperhatikan": {"gula": "Gula", "natrium": "Natrium (garam)",
+                                          "lemak_jenuh": "Lemak jenuh"}.get(atur["zat"], atur["zat"]),
+                "🟢 Layak": f"≤ {fmt_jumlah(atur['aman'])} {atur['satuan']}/sajian",
+                "🟡 Batasi": f"≤ {fmt_jumlah(atur['batasi'])} {atur['satuan']}/sajian",
+                "🔴 Tidak disarankan": f"> {fmt_jumlah(atur['batasi'])} {atur['satuan']}/sajian",
+            })
+        st.table(baris)
+        st.caption("Huruf Nutri-Level (A–D) ikut menguatkan hasil: level C/D membuat produk "
+                   "minimal berstatus 'batasi'.")
+    else:
+        st.info("Belum ada kondisi dipilih. Tanpa kondisi, aplikasi tetap menampilkan cek Nutri-Level "
+                "Kemenkes dan cek kebutuhan harian (GGL).")
+
+    st.markdown(
+        '<div class="kartu-warning">⚠️ Profil ini disimpan di perangkat/aplikasi dan hanya dipakai '
+        'untuk edukasi (bukan diagnosis atau pengganti konsultasi dokter/ahli gizi).</div>',
+        unsafe_allow_html=True)
+    if prof.lokasi_temp():
+        st.caption("⚠️ Profil disimpan di folder sementara server (folder aplikasi read-only).")
 
 
 # ===========================================================================
@@ -182,6 +271,18 @@ def halaman_beranda():
         "Pantau **Gula, Garam & Lemak (GGL)** dari makanan dan minuman kemasan. "
         "Scan labelnya, catat yang kamu konsumsi, dan lihat sisa batas harianmu."
     )
+
+    # status profil medis (dipakai untuk menilai kelayakan produk)
+    if prof.ada_profil():
+        st.markdown(
+            f'<div class="kartu-info">👤 <b>Profil:</b> {prof.ringkas()} — setiap produk yang kamu scan '
+            'otomatis dinilai <b>Layak / Batasi / Tidak disarankan</b> untukmu. Ubah di menu '
+            '<b>👤 Profil Saya</b>.</div>',
+            unsafe_allow_html=True)
+    else:
+        st.info("👤 Belum ada **profil medis**. Isi menu **👤 Profil Saya** (30 detik) supaya aplikasi "
+                "bisa menilai kelayakan produk untukmu — misalnya cocok atau tidak kalau kamu "
+                "diabetes/hipertensi/kolesterol.")
 
     r = tracker.ringkasan_tanggal()
     st.markdown("#### GGL HARI INI")
@@ -413,9 +514,46 @@ def halaman_scan():
     st.caption("Contoh: 0.5 sajian = setengah, 1.5 = satu setengah, 2 = habis 2 sajian.")
 
     # =======================================================================
-    # DUA CARA CEK: (1) peraturan Kemenkes (Nutri-Level)  (2) kebutuhan harian
+    # KELAYAKAN UNTUKMU (profil medis) + DUA CARA CEK
     # =======================================================================
     jenis_awal = nl.tebak_jenis(takaran or scan.get("takaran_saji"))
+    _pilih_now = st.session_state.get(
+        "inp_jenis_nl",
+        "Minuman (per 100 mL)" if jenis_awal == "minuman" else "Makanan (per 100 g)")
+    _jenis_now = "minuman" if str(_pilih_now).startswith("Minuman") else "makanan"
+    _nl_now = nl.analisis_nutri_level(
+        gula, natrium, lemak_jenuh, isi_sajian=isi_sajian, jenis=_jenis_now,
+        ambang=(setel.ambang_aktif(_jenis_now) or None),
+        per100_langsung=(scan.get("_per100") or None))
+
+    _prof = prof.muat()
+    _kel = cek.cek_kelayakan(per_sajian, _prof.get("kondisi"), _nl_now.get("level_zat"))
+    if _kel["butuh_profil"]:
+        st.markdown(
+            '<div class="kartu-info">👤 <b>Profil belum diisi.</b> Isi menu <b>👤 Profil Saya</b> '
+            'sekali saja, nanti aplikasi otomatis menilai <b>kelayakan produk untukmu</b> '
+            '(mis. untuk diabetes, hipertensi, kolesterol).</div>',
+            unsafe_allow_html=True)
+    else:
+        _baris_alasan = "".join(
+            f'<div style="margin-top:7px;font-size:13px">{a["emoji"]} <b>{a["kondisi"]}</b> — '
+            f'{a["zat"]}: {a["nilai_teks"]} → <b style="color:{_kel["warna"]}">{a["badge"]}</b>'
+            f'<div style="font-size:11.5px;color:#5F7A93">{a["saran"]}</div></div>'
+            for a in _kel["alasan"])
+        st.markdown(
+            f'<div style="background:{_kel["latar"]};border-left:6px solid {_kel["warna"]};'
+            f'border-radius:18px;padding:14px 16px;margin:8px 0 4px;'
+            f'box-shadow:0 6px 18px rgba(10,46,110,.08)">'
+            f'<div style="font-size:11.5px;font-weight:800;color:{_kel["warna"]};'
+            f'letter-spacing:.8px">KELAYAKAN UNTUKMU</div>'
+            f'<div style="font-size:21px;font-weight:800;color:{_kel["warna"]};margin-top:2px">'
+            f'{_kel["badge"]}</div>'
+            f'<div style="font-size:13.5px;color:#10233F;margin-top:2px">{_kel["pesan"]}</div>'
+            f'{_baris_alasan}</div>'
+            f'<div style="font-size:11px;color:#5F7A93;margin-bottom:6px">Acuan edukasi berdasarkan '
+            f'profil medis yang kamu isi — bukan diagnosis. Konsultasi tetap ke dokter/ahli gizi.</div>',
+            unsafe_allow_html=True)
+
     tab_nl, tab_har = st.tabs(["🏷️ Cek Nutri-Level (Kemenkes)", "🍽️ Cek Kebutuhan Harianku (GGL)"])
 
     with tab_nl:
@@ -809,6 +947,8 @@ if halaman.startswith("🏠"):
     halaman_beranda()
 elif halaman.startswith("📷"):
     halaman_scan()
+elif halaman.startswith("👤"):
+    halaman_profil()
 elif halaman.startswith("📊"):
     halaman_ggl_hari_ini()
 elif halaman.startswith("📅"):
