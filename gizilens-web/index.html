@@ -243,6 +243,7 @@ table.plain th,table.plain td{border:1px solid var(--garis);padding:8px 10px;tex
         <div class="sub-seksi">Periksa kembali hasil AI dengan label asli — semua angka bisa diedit.</div>
         <div id="konfirmasiSumber"></div>
         <div id="konfirmasiTeks"></div>
+        <div id="konfirmasiCek"></div>
 
         <div class="kartu-warning">⚠️ Periksa kembali hasil pembacaan AI dengan label pada kemasan sebelum
           melakukan analisis.</div>
@@ -421,6 +422,12 @@ table.plain th,table.plain td{border:1px solid var(--garis);padding:8px 10px;tex
         <button class="btn btn-primary" id="btnSimpanKey">💾 Simpan kunci</button>
         <button class="btn" id="btnHapusKey">🗑️ Hapus kunci</button>
       </div>
+      <div class="row2">
+        <button class="btn btn-sm" id="btnTesKey">🧪 Tes kunci AI sekarang</button>
+        <button class="btn btn-sm" id="btnKeScan">📷 Langsung coba scan</button>
+      </div>
+      <div class="panel kecil" id="hasilTesKey">Tekan <b>🧪 Tes kunci AI sekarang</b> untuk memastikan kuncinya
+        sudah benar — aplikasi akan mengirim gambar contoh ke Gemini dan menampilkan hasilnya.</div>
       <div class="field"><label><input type="checkbox" id="setTesseract"> Pakai OCR di HP (Tesseract) kalau
         kunci AI kosong/gagal</label></div>
 
@@ -574,6 +581,27 @@ GZ.FIELD_SPEC = {
   }
 };
 GZ.BARIS_LAIN = /gula|sugars?|natrium|sodium|lemak|fat|protein|karbohidrat|carb|energi|energy|saji|kemasan|serving|serat|fiber|jenuh|saturated|trans|kolesterol|cholesterol/i;
+
+/* Baris yang JELAS bukan nama produk (judul tabel, satuan, dsb.) */
+GZ._BUKAN_NAMA = /^(informasi|nilai|gizi|nutrition|facts|takaran|sajian|serving|jumlah|energi|energy|lemak|fat|protein|karbohidrat|carbohydrate|gula|sugar|natrium|sodium|garam|salt|kandungan|total|per|disajikan|basis|dalam|kemasan|komposisi|ingredients?|bahan|akg|dv|%|no|kode|berat|netto|isi)/i;
+
+/* Tebak nama produk dari baris teks paling atas label (buat jalur OCR). */
+GZ.tebakNamaProduk = function (baris) {
+  for (const t of (baris || [])) {
+    const s = String(t || "").replace(/\s+/g, " ").trim();
+    if (s.length < 4 || s.length > 60) continue;
+    if (GZ._BUKAN_NAMA.test(s)) continue;
+    if (GZ.BARIS_LAIN.test(s)) continue;              // baris nilai gizi, bukan nama
+    if (/^\d/.test(s)) continue;                      // jangan diawali angka
+    if (/[:=]\s*\d/.test(s)) continue;                // baris "x: 12 g"
+    const huruf = (s.match(/[A-Za-zÀ-ÿ]/g) || []).length;
+    if (huruf < 3) continue;
+    if ((s.match(/\d/g) || []).length > 4 && huruf < 8) continue;
+    return s.slice(0, 60);
+  }
+  return null;
+};
+
 GZ.POLA_TAKARAN_SAJI = /takaran\s+saji|ukuran\s+saji|per\s+sajian|serving\s+size/i;
 GZ.POLA_SAJIAN_KEMASAN = /jumlah\s+sajian?\s+per\s+kemasan|sajian?\s+per\s+kemasan|sajian?\s+dalam\s+kemasan|servings?\s+per\s+(?:package|container|pouch|box|bag)/i;
 
@@ -1150,9 +1178,32 @@ function muatTesseract() {
     document.head.appendChild(s);
   });
 }
+/* Perbesar + pertegas foto sebelum dibaca OCR (tulisan label kecil jadi lebih kebaca). */
+async function siapkanGambarOCR(blob) {
+  try {
+    const url = URL.createObjectURL(blob);
+    const img = await new Promise((res, rej) => {
+      const i = new Image();
+      i.onload = () => res(i);
+      i.onerror = () => rej(new Error("foto tidak terbaca"));
+      i.src = url;
+    });
+    const skala = Math.max(1, Math.min(2.2, 1600 / img.width));
+    const c = document.createElement("canvas");
+    c.width = Math.round(img.width * skala);
+    c.height = Math.round(img.height * skala);
+    const ctx = c.getContext("2d");
+    try { ctx.filter = "grayscale(1) contrast(1.4) brightness(1.08)"; } catch (e) {}
+    ctx.drawImage(img, 0, 0, c.width, c.height);
+    URL.revokeObjectURL(url);
+    return (await new Promise(r => c.toBlob(r, "image/png"))) || blob;
+  } catch (e) { return blob; }
+}
+
 async function ocrBaris(blob) {
   const T = await muatTesseract();
-  const url = URL.createObjectURL(blob);
+  const gambar = await siapkanGambarOCR(blob);
+  const url = URL.createObjectURL(gambar);
   try {
     const hasil = await T.recognize(url, "ind+eng", {
       logger: m => {
@@ -1185,6 +1236,7 @@ async function bacaLabel(blob) {
       const baris = await ocrBaris(blob);
       const h = GZ.parseLabelBaris(baris);
       h._sumber = "ocr"; h._baris = baris;
+      if (!h.nama_produk) h.nama_produk = GZ.tebakNamaProduk(baris);
       if (catatan) h._gemini_error = catatan;
       return h;
     } catch (e) {
@@ -1307,6 +1359,37 @@ function renderAnalisisScan() {
       "batas harian untuk gula, garam, dan lemak. Tetap perhatikan porsi ya.</p></div>";
   }
   $("#warnDampak").innerHTML = html;
+  renderCekPembacaan();
+}
+
+/* Ringkasan item mana yang sudah terbaca otomatis & mana yang perlu diisi manual. */
+function renderCekPembacaan() {
+  const box = $("#konfirmasiCek");
+  if (!box) return;
+  const f = bacaFormScan();
+  const item = [
+    ["Nama produk", !!f.nama, "biasanya nama merek/varian di bagian paling atas label"],
+    ["Takaran saji", !!f.takaran, "contoh: 250 ml / 1 bungkus (35 g)"],
+    ["Gula (per sajian)", f.gula > 0, "tulis angka pada baris Gula/Total Sugars"],
+    ["Natrium (per sajian)", f.natrium > 0, "tulis angka pada baris Natrium/Sodium"],
+    ["Lemak total (per sajian)", f.lemak > 0, "tulis angka pada baris Lemak Total/Total Fat"]
+  ];
+  const ok = item.filter(i => i[1]).length;
+  let html = '<div class="panel"><b>📋 Cek hasil pembacaan: ' + ok + " dari " + item.length +
+    " item terbaca otomatis</b><br>";
+  item.forEach(function (i) {
+    html += (i[1] ? "✅ " : "⚠️ ") + i[0] + (i[1] ? "" : " — <i>belum terbaca, " + i[2] + "</i>") + "<br>";
+  });
+  if (f.sajianKemasan <= 1) {
+    html += "⚠️ Jumlah sajian per kemasan = 1 — pastikan benar (banyak kemasan berisi 1–3 sajian)<br>";
+  }
+  if (!(GZ.state.settings.geminiKey || "").trim()) {
+    html += '<div class="kartu-warning" style="margin-top:8px">🤖 Saat ini pembacaan memakai <b>OCR gratis di HP</b>. ' +
+      'Kalau labelnya kecil / dua bahasa, isi <b>kunci AI Vision</b> di menu <b>⚙️ Pengaturan</b> supaya lebih akurat ' +
+      "(cukup sekali, tersimpan di HP-mu).</div>";
+  }
+  html += "</div>";
+  box.innerHTML = html;
 }
 function resetScan() {
   hasilScan = null; sudahDitambah = false;
@@ -1474,6 +1557,40 @@ function renderPengaturan() {
     "). Backup disarankan sebelum berganti HP / membersihkan browser.";
 }
 
+/* Uji kunci AI: kirim gambar contoh berisi angka gizi ke Gemini, tampilkan hasilnya. */
+async function tesKunciAI() {
+  const out = $("#hasilTesKey");
+  const key = (GZ.state.settings.geminiKey || "").trim();
+  if (!key) {
+    out.innerHTML = "⚠️ Kolom kunci masih kosong — tempel kuncinya dulu, tekan 💾 Simpan kunci, baru tes.";
+    return;
+  }
+  out.innerHTML = '<span class="spinner"></span> Sedang menguji kunci ke Gemini… (butuh internet, ±5–15 detik)';
+  const c = document.createElement("canvas");
+  c.width = 620; c.height = 220;
+  const ctx = c.getContext("2d");
+  ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, c.width, c.height);
+  ctx.fillStyle = "#000000"; ctx.font = "24px sans-serif";
+  ctx.fillText("Informasi Nilai Gizi", 18, 40);
+  ctx.fillText("Takaran saji: 250 ml", 18, 80);
+  ctx.fillText("Jumlah sajian per kemasan: 2", 18, 120);
+  ctx.fillText("Gula 18 g   Natrium 120 mg", 18, 160);
+  ctx.fillText("Lemak total 4 g", 18, 200);
+  const blob = await new Promise(r => c.toBlob(r, "image/png"));
+  try {
+    const d = await geminiBaca(blob, key);
+    const h = geminiKeHasil(d);
+    out.innerHTML = "✅ <b>Kunci AI BERFUNGSI</b> (model: " + esc(d.__model) + ").<br>Hasil uji baca gambar contoh: " +
+      "gula " + GZ.fmtJumlah(h.gula) + " g · natrium " + GZ.fmtJumlah(h.natrium) + " mg · lemak " +
+      GZ.fmtJumlah(h.lemak) + " g · sajian/kemasan " + h.sajian_per_kemasan + " · takaran " +
+      esc(h.takaran_saji || "-") + ".<br>Sekarang scan label asli, hasilnya akan lebih lengkap dari OCR.";
+  } catch (e) {
+    out.innerHTML = "❌ <b>Kunci belum berfungsi.</b><br>Pesan dari Gemini: " +
+      esc(String(e.message || e).slice(0, 260)) +
+      "<br><br>Cek: kunci tersalin utuh? (biasanya diawali AIza…) · internet aktif? · kuota gratis harian belum habis?";
+  }
+}
+
 /* ---------- unduh berkas ---------- */
 function unduh(nama, isi, mime) {
   const blob = new Blob([isi], { type: mime || "text/plain;charset=utf-8" });
@@ -1548,6 +1665,8 @@ function pasangKejadian() {
     GZ.save();
     toast(GZ.state.settings.geminiKey ? "Kunci AI disimpan di perangkat ini ✅" : "Kunci dikosongkan.");
   });
+  $("#btnTesKey").addEventListener("click", tesKunciAI);
+  $("#btnKeScan").addEventListener("click", function () { bukaHalaman("scan"); });
   $("#btnHapusKey").addEventListener("click", function () {
     GZ.state.settings.geminiKey = ""; $("#setGemini").value = ""; GZ.save();
     toast("Kunci AI dihapus 🗑️");
