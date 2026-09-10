@@ -241,6 +241,33 @@ def _teks_nilai_mentah(teks: str, m) -> Optional[str]:
     return seg[:60]
 
 
+_BUKAN_NAMA = re.compile(
+    r"^(informasi|nilai|gizi|nutrition|facts|takaran|sajian|serving|jumlah|energi|energy|lemak|fat|"
+    r"protein|karbohidrat|carbohydrate|gula|sugar|natrium|sodium|garam|salt|kandungan|total|per|"
+    r"disajikan|basis|dalam|kemasan|komposisi|ingredients?|bahan|akg|dv|%|no|kode|berat|netto|isi)",
+    re.I,
+)
+
+
+def tebak_nama_produk(baris_list) -> Optional[str]:
+    """Tebak nama produk dari baris teks label (dipakai kalau AI/OCR tak mengembalikan nama)."""
+    for teks in baris_list or []:
+        s = re.sub(r"\s+", " ", str(teks or "")).strip()
+        if not (4 <= len(s) <= 60):
+            continue
+        if _BUKAN_NAMA.match(s) or _BARIS_LAIN.search(s):
+            continue
+        if s[0].isdigit() or re.search(r"[:=]\s*\d", s):
+            continue
+        huruf = len(re.findall(r"[A-Za-z]", s))
+        if huruf < 3:
+            continue
+        if len(re.findall(r"\d", s)) > 4 and huruf < 8:
+            continue
+        return s[:60]
+    return None
+
+
 def parse_label_baris(baris_list):
     """Ubah daftar baris hasil OCR jadi struktur nilai gizi."""
     bersih = [b.strip() for b in baris_list if b and b.strip()]
@@ -562,6 +589,8 @@ def read_nutrition_label(byte_gambar: bytes, gemini_key: Optional[str] = None) -
             hasil = parse_label_baris(baris)
             hasil["_sumber"] = "ocr"
             hasil["_baris"] = baris
+            if not hasil.get("nama_produk"):
+                hasil["nama_produk"] = tebak_nama_produk(baris)
             hasil["_gemini_error"] = catatan
             return hasil
         except Exception as exc:
@@ -578,6 +607,8 @@ def read_nutrition_label(byte_gambar: bytes, gemini_key: Optional[str] = None) -
     hasil = parse_label_baris(baris)
     hasil["_sumber"] = "ocr"
     hasil["_baris"] = baris
+    if not hasil.get("nama_produk"):
+        hasil["nama_produk"] = tebak_nama_produk(baris)
     return hasil
 
 
