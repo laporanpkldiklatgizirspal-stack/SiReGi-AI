@@ -19,14 +19,31 @@ recall-gizi-web/
 │   ├── utils/
 │   ├── data/
 │   └── requirements.txt
-├── nutri-level/ -> Aplikasi NUTRI LEVEL (scan label gizi -> level 🟢🟡🔴)
+├── nutri-level/ -> Aplikasi GiziLens (scan label gizi -> level 🟢🟡🔴 + Tracker GGL harian)
 │   ├── app.py
 │   ├── nutri_core.py
 │   ├── assets/logo_rspal.png
 │   └── requirements.txt
+├── gizilens-web/ -> GiziLens versi JAVASCRIPT (1 file HTML, jalan di HP, tanpa server)
+│   ├── index.html
+│   ├── manifest.webmanifest
+│   ├── sw.js
+│   ├── assets/logo_rspal.png
+│   └── README.md
 ├── .gitignore
 └── README.md
 ```
+
+## GiziLens versi JavaScript (bisa dibuka dari HP)
+
+Folder `gizilens-web/` berisi GiziLens dalam bentuk **satu berkas HTML** (HTML + CSS + JavaScript,
+tanpa Python). Kamera HP langsung jalan, catatan tersimpan di perangkat (localStorage), dan bisa
+dipasang ke layar utama (Add to Home Screen).
+
+- Aktifkan **GitHub Pages** sekali saja: repo → **Settings → Pages** → Source: *Deploy from a branch*
+  → Branch: `master`, folder `/ (root)` → Save.
+- Alamat aplikasi: `https://laporanpkldiklatgizirspal-stack.github.io/SiReGi-AI/gizilens-web/`
+- Pembaca label: **AI Vision Gemini** (isi kunci di ⚙️ Pengaturan) atau **OCR Tesseract** di HP (gratis).
 
 ## Cara deploy (Streamlit Community Cloud — gratis)
 
