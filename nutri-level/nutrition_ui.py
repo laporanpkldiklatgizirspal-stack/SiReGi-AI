@@ -97,10 +97,100 @@ def hero(judul: str = config.APP_NAME, tagline: str = config.APP_TAGLINE):
 
 
 def judul_seksi(teks: str, sub: str = ""):
+    """Kepala halaman bergaya aplikasi HP (gradient biru, sudut membulat)."""
     import streamlit as st
-    st.markdown(f'<div class="judul-seksi">{teks}</div>', unsafe_allow_html=True)
-    if sub:
-        st.markdown(f'<div class="sub-seksi">{sub}</div>', unsafe_allow_html=True)
+    st.markdown(
+        f'<div class="kepala-app"><div class="ka-judul">{teks}</div>'
+        + (f'<div class="ka-sub">{sub}</div>' if sub else "")
+        + "</div>",
+        unsafe_allow_html=True,
+    )
+
+
+def css_desain_a() -> str:
+    """Gaya 'Desain A': seperti aplikasi HP — kartu besar membulat, tombol besar, angka tebal."""
+    return """
+<style>
+  /* kepala halaman bergaya aplikasi */
+  .kepala-app { background:linear-gradient(145deg,#0A2E6E 0%,#1565C0 62%,#2E86DE 100%);
+    border-radius:20px; padding:16px 18px 15px; margin:2px 0 14px; color:#fff;
+    box-shadow:0 10px 26px rgba(10,46,110,.22); }
+  .kepala-app .ka-judul { font-size:19px; font-weight:800; letter-spacing:.2px; }
+  .kepala-app .ka-sub { font-size:12.5px; color:#D8E6FB; margin-top:4px; line-height:1.45; }
+  .judul-seksi { display:none; }
+
+  /* kartu & panel lebih membulat (ala aplikasi) */
+  .panel, .kartu-info, .kartu-warning { border-radius:16px; }
+  .kartu-ggl { border-radius:20px; box-shadow:0 8px 22px rgba(10,46,110,.09); }
+  .kartu-ggl .nilai { font-size:30px; }
+  .kartu-ggl .head { font-size:12.5px; }
+  .banner-danger { border-radius:20px; }
+
+  /* tombol besar & nyaman disentuh */
+  .stButton > button, .stDownloadButton > button {
+    border-radius:16px !important; min-height:48px; font-weight:800 !important; font-size:14.5px !important;
+    box-shadow:0 6px 16px rgba(10,46,110,.10); }
+  .stButton > button[kind="primary"] {
+    background:linear-gradient(120deg,#0A2E6E,#1565C0) !important; border:0 !important;
+    box-shadow:0 8px 18px rgba(21,101,192,.3) !important; }
+
+  /* input lebih lega (mudah diketik di HP) */
+  .stTextInput input, .stNumberInput input, .stSelectbox div[data-baseweb="select"] > div {
+    border-radius:14px !important; min-height:44px; }
+
+  /* menu samping jadi pil ala aplikasi */
+  section[data-testid="stSidebar"] [role="radiogroup"] label {
+    border-radius:14px; padding:9px 12px; margin:2px 0; transition:background .15s; }
+  section[data-testid="stSidebar"] [role="radiogroup"] label:hover { background:#EEF5FE; }
+  section[data-testid="stSidebar"] [role="radiogroup"] label:has(input:checked) {
+    background:linear-gradient(120deg,#EAF2FF,#DCEAFC); font-weight:800; }
+  section[data-testid="stSidebar"] [role="radiogroup"] label:has(input:checked) p {
+    color:#0A2E6E !important; font-weight:800; }
+
+  /* tab ala aplikasi */
+  .stTabs [data-baseweb="tab-list"] { gap:8px; }
+  .stTabs [data-baseweb="tab"] { border-radius:14px; padding:8px 14px; font-weight:700; }
+  .stTabs [aria-selected="true"] { background:linear-gradient(120deg,#0A2E6E,#1565C0); }
+  .stTabs [aria-selected="true"] p { color:#fff !important; }
+
+  /* lingkaran status (donat) */
+  .donat-bungkus { display:flex; align-items:center; gap:16px; background:#fff; border:1px solid #E2EDF8;
+    border-radius:22px; padding:16px 18px; margin:6px 0 12px; box-shadow:0 8px 22px rgba(10,46,110,.08); }
+  .donat { position:relative; width:118px; height:118px; flex:0 0 118px; }
+  .donat svg { transform:rotate(-90deg); }
+  .donat .inti { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center;
+    justify-content:center; }
+  .donat .inti .angka { font-size:26px; font-weight:800; line-height:1; color:#10233F; }
+  .donat .inti .satuan { font-size:10.5px; color:#5F7A93; font-weight:700; margin-top:2px; }
+  .donat-teks .judul { font-size:13px; font-weight:800; color:#0A2E6E; letter-spacing:.3px; }
+  .donat-teks .pesan { font-size:13px; color:#10233F; margin-top:6px; line-height:1.5; }
+  .donat-teks .kecil { font-size:11.5px; color:#5F7A93; margin-top:6px; }
+</style>"""
+
+
+def donat(persen: float, warna: str, label: str, nilai: str, satuan: str,
+          pesan_html: str = "", kecil_html: str = "") -> str:
+    """Lingkaran progres (SVG) bergaya aplikasi HP + keterangan di sebelahnya."""
+    import math
+    p = max(0.0, min(float(persen or 0), 130.0))
+    r, lingkar = 52.0, 2 * math.pi * 52.0
+    isi = lingkar * (min(p, 100.0) / 100.0)
+    return f"""
+    <div class="donat-bungkus">
+      <div class="donat">
+        <svg width="118" height="118" viewBox="0 0 118 118">
+          <circle cx="59" cy="59" r="{r:.0f}" fill="none" stroke="#EDF3FA" stroke-width="11"></circle>
+          <circle cx="59" cy="59" r="{r:.0f}" fill="none" stroke="{warna}" stroke-width="11"
+                  stroke-linecap="round" stroke-dasharray="{isi:.1f} {lingkar:.1f}"></circle>
+        </svg>
+        <div class="inti"><div class="angka">{nilai}</div><div class="satuan">{satuan}</div></div>
+      </div>
+      <div class="donat-teks">
+        <div class="judul">{label}</div>
+        {f'<div class="pesan">{pesan_html}</div>' if pesan_html else ''}
+        {f'<div class="kecil">{kecil_html}</div>' if kecil_html else ''}
+      </div>
+    </div>"""
 
 
 def pill(warna: str, teks: str) -> str:
