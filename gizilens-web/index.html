@@ -1,0 +1,1604 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>GiziLens — Scan Label Gizi &amp; Tracker GGL Harian</title>
+<meta name="theme-color" content="#1565C0">
+<meta name="description" content="GiziLens — pindai label Informasi Nilai Gizi dengan kamera, kenali Gula/Garam/Lemak, dan pantau batas harianmu.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="assets/logo_rspal.png">
+<link rel="apple-touch-icon" href="assets/logo_rspal.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+<style>
+:root{
+  --biru-tua:#0A2E6E; --biru:#1565C0; --abu:#5F7A93; --teks:#10233F;
+  --hijau:#22c55e; --kuning:#f59e0b; --merah:#ef4444;
+  --garis:#E2EDF8; --bg:#F7FAFD; --kartu:#fff;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  font-family:'Plus Jakarta Sans','Segoe UI',Roboto,sans-serif; color:var(--teks);
+  background:radial-gradient(1100px 460px at 88% -8%, #EAF1FB 0%, rgba(234,241,251,0) 60%),
+             linear-gradient(180deg,#F7FAFD 0%,#F1F6FC 100%);
+  min-height:100vh; -webkit-text-size-adjust:100%;
+}
+h1,h2,h3,h4{color:var(--biru-tua);margin:.4em 0}
+p{line-height:1.55}
+a{color:var(--biru)}
+button{font-family:inherit}
+
+/* ---------- tata letak ---------- */
+.topbar{display:none;position:sticky;top:0;z-index:40;align-items:center;gap:10px;
+  background:linear-gradient(120deg,var(--biru-tua),var(--biru));color:#fff;padding:10px 14px;
+  box-shadow:0 4px 14px rgba(10,46,110,.18)}
+.topbar .topbar-title{font-weight:800;font-size:16px}
+.topbar .topbar-date{margin-left:auto;font-size:11.5px;color:#D8E6FB}
+.icon-btn{background:rgba(255,255,255,.16);border:0;color:#fff;font-size:18px;border-radius:10px;
+  padding:4px 11px;cursor:pointer}
+
+.layout{display:flex;gap:22px;max-width:1180px;margin:0 auto;padding:18px 20px 60px;align-items:flex-start}
+.sidebar{width:250px;flex:0 0 250px;position:sticky;top:18px;background:#fff;border:1px solid var(--garis);
+  border-radius:18px;padding:16px 14px;box-shadow:0 6px 20px rgba(10,46,110,.07)}
+.sidebar .brand{font-size:18px;font-weight:800;color:var(--biru-tua)}
+.sidebar .org{font-size:11.5px;color:var(--abu);margin:2px 0 12px;line-height:1.35}
+#nav{display:flex;flex-direction:column;gap:4px}
+.nav-item{display:block;width:100%;text-align:left;background:transparent;border:0;border-radius:11px;
+  padding:9px 12px;font-size:14px;font-weight:600;color:var(--teks);cursor:pointer}
+.nav-item:hover{background:#EEF5FE}
+.nav-item.active{background:linear-gradient(120deg,#EAF2FF,#DCEAFC);color:var(--biru-tua);font-weight:800}
+.sidebar-foot{border-top:1px dashed var(--garis);margin-top:12px;padding-top:10px;font-size:11.5px;color:var(--abu)}
+.main{flex:1 1 auto;min-width:0}
+.page{display:none}
+.page.active{display:block;animation:masuk .18s ease}
+@keyframes masuk{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+/* ---------- komponen umum ---------- */
+.hero{position:relative;overflow:hidden;background:linear-gradient(120deg,var(--biru-tua) 0%,var(--biru) 58%,#2E86DE 100%);
+  border-radius:24px;padding:24px 26px 20px;margin:6px 0 16px;box-shadow:0 10px 30px rgba(10,46,110,.22);
+  color:#fff;text-align:center}
+.hero-logo{height:56px;filter:drop-shadow(0 2px 4px rgba(0,0,0,.15))}
+.hero h1{color:#fff;font-size:30px;font-weight:800;margin:2px 0}
+.hero .org{color:#D8E6FB;font-size:12.5px;font-weight:600}
+.hero .tag{color:#EAF2FF;font-size:13.5px;margin-top:4px}
+.judul-seksi{font-size:19px;font-weight:800;color:var(--biru-tua);margin:18px 0 2px}
+.sub-seksi{color:var(--abu);font-size:13.5px;margin-bottom:10px}
+.panel{background:#fff;border:1px solid var(--garis);border-radius:16px;padding:14px 16px;margin:8px 0;
+  box-shadow:0 3px 12px rgba(10,46,110,.05);font-size:14px;line-height:1.6}
+.kartu-info{background:#EAF1FB;border-left:4px solid var(--biru);border-radius:10px;padding:10px 14px;
+  font-size:13.5px;color:var(--teks);margin:10px 0}
+.kartu-warning{background:#FFF7E6;border:1px solid #F5D68C;border-left:5px solid var(--kuning);border-radius:10px;
+  padding:10px 14px;font-size:13.5px;color:#7A4E03;margin:10px 0}
+.banner-danger{background:linear-gradient(120deg,#7F1D1D,#DC2626);color:#fff;border-radius:16px;padding:14px 18px;
+  margin:12px 0;box-shadow:0 8px 22px rgba(220,38,38,.2)}
+.banner-danger b{font-size:16px}
+.banner-danger p{margin:6px 0 0;font-size:13.5px;line-height:1.55}
+.banner-ok{background:linear-gradient(120deg,#065F46,#059669)}
+.banner-info{background:linear-gradient(120deg,#0A2E6E,#2E86DE);box-shadow:0 8px 22px rgba(10,46,110,.2)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:10px 0}
+.btn{border:1px solid var(--garis);background:#fff;color:var(--teks);border-radius:13px;padding:11px 14px;
+  font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 2px 8px rgba(10,46,110,.06)}
+.btn:hover{background:#F3F8FF}
+.btn-primary{background:linear-gradient(120deg,var(--biru-tua),var(--biru));border:0;color:#fff;
+  box-shadow:0 6px 16px rgba(21,101,192,.28)}
+.btn-danger{background:#fff;border-color:#F5C2C2;color:#B91C1C}
+.btn:disabled{opacity:.55;cursor:not-allowed}
+.btn-sm{padding:7px 10px;font-size:12.5px;border-radius:10px}
+.field{margin:10px 0}
+.field label{display:block;font-size:12.5px;font-weight:700;color:var(--abu);margin-bottom:4px}
+input[type=text],input[type=number],input[type=password],input[type=date],select{
+  width:100%;padding:11px 12px;border:1px solid var(--garis);border-radius:12px;font-size:15px;
+  font-family:inherit;color:var(--teks);background:#fff}
+input:focus,select:focus{outline:2px solid #BFDCFB;border-color:var(--biru)}
+input[type=file]{font-size:13px;padding:8px 0}
+.kartu-3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:10px 0}
+.kartu-ggl{border:1px solid var(--garis);border-top:5px solid var(--biru);border-radius:16px;background:#fff;
+  padding:14px 12px;text-align:center;box-shadow:0 3px 12px rgba(10,46,110,.06)}
+.kartu-ggl .head{font-size:12.5px;font-weight:800;color:var(--teks);letter-spacing:.6px}
+.kartu-ggl .nilai{font-size:24px;font-weight:800;color:var(--teks);line-height:1.15;margin-top:3px}
+.kartu-ggl .nilai .unit{font-size:13px;font-weight:700;color:var(--abu)}
+.kartu-ggl .pct{font-size:12.5px;color:var(--abu);font-weight:600;margin:3px 0 6px}
+.bar{height:8px;border-radius:99px;background:#EEF3F9;overflow:hidden;margin:0 2px 8px}
+.bar i{display:block;height:100%;border-radius:99px;transition:width .3s}
+.pill{display:inline-block;border-radius:999px;padding:4px 12px;font-size:11.5px;font-weight:800}
+table.data{width:100%;border-collapse:collapse;font-size:13px;background:#fff;border-radius:12px;overflow:hidden}
+table.data th{background:#EEF5FE;color:var(--biru-tua);text-align:left;padding:9px 10px;font-size:12px}
+table.data td{padding:9px 10px;border-top:1px solid #F0F5FB;vertical-align:top}
+.table-scroll{overflow-x:auto;border:1px solid var(--garis);border-radius:12px}
+details.editor{border:1px solid var(--garis);border-radius:12px;padding:8px 12px;margin:8px 0;background:#fff}
+details.editor summary{cursor:pointer;font-size:13px;font-weight:700;color:var(--biru-tua)}
+.metric{border:1px solid var(--garis);border-radius:14px;padding:12px;background:#fff}
+.metric .m-label{font-size:12px;color:var(--abu);font-weight:700}
+.metric .m-val{font-size:16px;font-weight:800;color:var(--teks);margin-top:3px}
+.metric .m-sub{font-size:11.5px;color:var(--abu);margin-top:3px}
+.chart{background:#fff;border:1px solid var(--garis);border-radius:16px;padding:14px 12px 6px;margin:10px 0}
+.chart-grid{position:relative;display:grid;grid-template-columns:repeat(7,1fr);gap:8px;align-items:end;
+  height:210px;padding-top:12px;border-bottom:1px solid #E8EEF6}
+.chart-grid .ref{position:absolute;left:0;right:0;border-top:1px dashed #C9D8E8;font-size:10px;color:var(--abu)}
+.col{display:flex;align-items:flex-end;justify-content:center;gap:3px;height:100%}
+.col i{display:block;width:9px;border-radius:4px 4px 0 0;min-height:2px}
+.chart-label{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;font-size:10.5px;color:var(--abu);
+  text-align:center;margin-top:6px}
+.legend{font-size:11.5px;color:var(--abu);margin-top:8px;text-align:center}
+.cam-wrap{position:relative;border:1px solid #D8E6F5;border-radius:18px;overflow:hidden;background:#0B1220;
+  box-shadow:0 4px 14px rgba(10,46,110,.08);min-height:180px}
+.cam-wrap video{display:block;width:100%;max-height:60vh;object-fit:cover;background:#0B1220}
+.cam-off{padding:34px 16px;text-align:center;color:#B9C8DE;font-size:13px}
+.footer-app{text-align:center;color:var(--abu);font-size:11.5px;margin-top:26px}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:#0A2E6E;color:#fff;
+  padding:11px 18px;border-radius:13px;font-size:13.5px;font-weight:600;box-shadow:0 8px 24px rgba(10,46,110,.3);
+  z-index:99;max-width:88vw;text-align:center}
+.spinner{width:16px;height:16px;border:2.5px solid #CFE0F2;border-top-color:var(--biru);border-radius:50%;
+  display:inline-block;animation:spin .8s linear infinite;vertical-align:-3px;margin-right:7px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.mono{font-family:ui-monospace,Consolas,monospace;font-size:12px;background:#F5F8FC;border-radius:10px;
+  padding:10px;white-space:pre-wrap;max-height:190px;overflow:auto}
+.kecil{font-size:12px;color:var(--abu)}
+hr{border:0;border-top:1px dashed var(--garis);margin:16px 0}
+ol,ul{padding-left:20px}
+table.plain{width:100%;border-collapse:collapse;font-size:13.5px;margin:8px 0}
+table.plain th,table.plain td{border:1px solid var(--garis);padding:8px 10px;text-align:left}
+
+/* ---------- HP ---------- */
+@media (max-width: 860px){
+  .topbar{display:flex}
+  .layout{padding:12px 12px 70px;gap:0}
+  .sidebar{position:fixed;top:0;left:0;bottom:0;width:260px;border-radius:0 18px 18px 0;z-index:50;
+    transform:translateX(-105%);transition:transform .2s ease;overflow-y:auto}
+  .sidebar.open{transform:none;box-shadow:0 0 0 100vmax rgba(10,35,63,.35)}
+  .kartu-3{grid-template-columns:1fr}
+  .row2{grid-template-columns:1fr}
+  .row3{grid-template-columns:1fr}
+  .hero{padding:20px 16px}
+  .hero h1{font-size:25px}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <button class="icon-btn" id="btnMenu" aria-label="Menu">☰</button>
+  <span class="topbar-title">🔵 GiziLens</span>
+  <span class="topbar-date" id="topDate"></span>
+</div>
+
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">🔵 GiziLens</div>
+    <div class="org">Subdep Gizi RSPAL dr. Ramelan</div>
+    <nav id="nav">
+      <button class="nav-item active" data-page="beranda">🏠 Beranda</button>
+      <button class="nav-item" data-page="scan">📷 Scan Produk</button>
+      <button class="nav-item" data-page="hariini">📊 GGL Hari Ini</button>
+      <button class="nav-item" data-page="riwayat">📅 Riwayat</button>
+      <button class="nav-item" data-page="mingguan">📈 Ringkasan 7 Hari</button>
+      <button class="nav-item" data-page="edukasi">📖 Edukasi</button>
+      <button class="nav-item" data-page="pengaturan">⚙️ Pengaturan</button>
+      <button class="nav-item" data-page="tentang">ℹ️ Tentang</button>
+    </nav>
+    <div class="sidebar-foot" id="sidebarFoot">Catatan tersimpan di perangkat ini (offline).</div>
+  </aside>
+
+  <main class="main" id="main">
+
+    <!-- ================= BERANDA ================= -->
+    <section class="page active" id="page-beranda">
+      <div class="hero">
+        <img src="assets/logo_rspal.png" alt="Logo RSPAL" class="hero-logo" onerror="this.style.display='none'">
+        <h1>GiziLens</h1>
+        <div class="org">Subdep Gizi RSPAL dr. Ramelan</div>
+        <div class="tag">Scan Label • Kenali Gizi • Pantau GGL</div>
+      </div>
+      <h3>Selamat Datang di GiziLens 👋</h3>
+      <p>Pantau <b>Gula, Garam &amp; Lemak (GGL)</b> dari makanan dan minuman kemasan. Scan labelnya,
+         catat yang kamu konsumsi, dan lihat sisa batas harianmu.</p>
+      <div class="judul-seksi">GGL HARI INI</div>
+      <div class="kartu-3" id="berandaCards"></div>
+      <div id="berandaStatus" class="sub-seksi"></div>
+      <div class="row2">
+        <button class="btn btn-primary" data-goto="scan">📷 SCAN PRODUK</button>
+        <button class="btn" data-goto="hariini">📊 Lihat GGL Hari Ini</button>
+      </div>
+    </section>
+
+    <!-- ================= SCAN ================= -->
+    <section class="page" id="page-scan">
+      <div class="judul-seksi">📷 Scan Produk</div>
+      <div class="sub-seksi">Arahkan kamera ke bagian Informasi Nilai Gizi pada kemasan.</div>
+
+      <!-- tahap 1: kamera -->
+      <div id="scanKamera">
+        <div class="panel">Pastikan: • Label terlihat penuh • Tulisan tidak buram • Cahaya cukup
+          • Kamera tidak terlalu miring<br>• Kalau kamera sulit fokus: geser pelan mendekat/menjauh
+          (±15–25 cm) sampai tajam</div>
+        <div class="cam-wrap" id="camWrap">
+          <video id="camVideo" playsinline autoplay muted></video>
+          <div class="cam-off" id="camOff">Menyalakan kamera…</div>
+        </div>
+        <canvas id="camCanvas" hidden></canvas>
+        <div class="kartu-info" id="camMsg">📷 Silakan scan label informasi gizi produk.</div>
+        <div class="row2">
+          <button class="btn btn-primary" id="btnAmbil">📸 Ambil Foto</button>
+          <button class="btn" id="btnGantiKamera">🔄 Ganti Kamera</button>
+        </div>
+        <div class="kartu-info">📤 <b>Kamera susah fokus?</b> Foto dulu pakai kamera HP biasa, lalu pilih
+          fotonya di bawah — hasilnya sama.<br>
+          <input type="file" id="fileFoto" accept="image/*" capture="environment">
+        </div>
+      </div>
+
+      <!-- tahap 2: memproses -->
+      <div id="scanProses" hidden>
+        <div class="panel"><span class="spinner"></span> <b>✅ Foto berhasil diambil.</b><br>
+          Sedang membaca informasi nilai gizi… <span id="prosesKabar" class="kecil"></span></div>
+        <div id="prosesPratinjau"></div>
+      </div>
+
+      <!-- tahap 3: konfirmasi -->
+      <div id="scanKonfirmasi" hidden>
+        <div class="judul-seksi">🔎 Hasil Pembacaan Label</div>
+        <div class="sub-seksi">Periksa kembali hasil AI dengan label asli — semua angka bisa diedit.</div>
+        <div id="konfirmasiSumber"></div>
+        <div id="konfirmasiTeks"></div>
+
+        <div class="kartu-warning">⚠️ Periksa kembali hasil pembacaan AI dengan label pada kemasan sebelum
+          melakukan analisis.</div>
+
+        <div class="field"><label>Nama produk (opsional)</label>
+          <input type="text" id="inpNama" placeholder="contoh: Susu Cokelat 250 ml"></div>
+        <div class="field"><label>Takaran saji</label>
+          <input type="text" id="inpTakaran" placeholder="contoh: 250 ml / 1 bungkus (35 g)"></div>
+        <div class="row3">
+          <div class="field"><label>Gula (gram) / sajian</label>
+            <input type="number" id="inpGula" min="0" max="2000" step="0.1" value="0"></div>
+          <div class="field"><label>Natrium (mg) / sajian</label>
+            <input type="number" id="inpNatrium" min="0" max="20000" step="1" value="0"></div>
+          <div class="field"><label>Lemak total (gram) / sajian</label>
+            <input type="number" id="inpLemak" min="0" max="2000" step="0.1" value="0"></div>
+        </div>
+        <div class="field"><label>Jumlah sajian per kemasan</label>
+          <input type="number" id="inpSajianKemasan" min="1" max="60" step="1" value="1"></div>
+
+        <hr>
+        <div class="judul-seksi">🍽️ Berapa sajian yang kamu konsumsi?</div>
+        <div class="field"><label>Jumlah sajian dikonsumsi</label>
+          <input type="number" id="inpJumlah" min="0.25" max="60" step="0.5" value="1"></div>
+        <div class="kecil">Contoh: 0,5 sajian = setengah · 1,5 = satu setengah · 2 = habis 2 sajian.</div>
+
+        <div class="judul-seksi">HASIL ANALISIS PRODUK</div>
+        <h4>A. PRODUK INI (kandungan per 1 sajian)</h4>
+        <div class="kartu-3" id="kartuPerSajian"></div>
+        <div class="kecil">Level warna produk dihitung per 1 sajian terhadap batas harian — belum tentu sama
+          dengan kualitas total konsumsimu hari ini.</div>
+
+        <h4 id="judulPerKemasan">B. JIKA 1 KEMASAN DIKONSUMSI SELURUHNYA</h4>
+        <div class="kartu-3" id="kartuPerKemasan"></div>
+
+        <h4 id="judulDampak">C. DAMPAK KE TOTAL HARI INI</h4>
+        <div id="blokDampak"></div>
+        <div id="warnDampak"></div>
+
+        <hr>
+        <div class="row2">
+          <button class="btn btn-primary" id="btnTambah">➕ Tambahkan ke GGL Hari Ini</button>
+          <button class="btn" id="btnScanLagi">📷 Scan Produk Lain</button>
+        </div>
+        <div class="kecil">Produk baru masuk catatan hanya setelah tombol <b>Tambahkan</b> ditekan.</div>
+      </div>
+    </section>
+
+    <!-- ================= GGL HARI INI ================= -->
+    <section class="page" id="page-hariini">
+      <div class="judul-seksi">📊 GGL Hari Ini</div>
+      <div class="sub-seksi" id="hariiniTanggal"></div>
+      <div class="kartu-3" id="hariiniCards"></div>
+      <div id="hariiniStatus" style="font-size:16px;font-weight:800;margin:10px 0"></div>
+      <div class="judul-seksi">SISA BATAS HARI INI</div>
+      <div class="panel" id="hariiniSisa"></div>
+      <div class="judul-seksi">🔎 Kontributor GGL Hari Ini</div>
+      <div class="kartu-3" id="hariiniKontributor"></div>
+      <hr>
+      <div class="judul-seksi" id="judulTabelHariIni">🍽️ Produk yang Dikonsumsi</div>
+      <div id="tabelHariIni"></div>
+      <div id="totalHariIni" style="font-weight:600;margin-top:10px"></div>
+    </section>
+
+    <!-- ================= RIWAYAT ================= -->
+    <section class="page" id="page-riwayat">
+      <div class="judul-seksi">📅 Riwayat GGL</div>
+      <div class="sub-seksi">Lihat catatan konsumsi di tanggal lain.</div>
+      <div class="row3">
+        <button class="btn" id="btnHariSebelum">◀ Sebelumnya</button>
+        <input type="date" id="inpRiwayatTanggal">
+        <button class="btn" id="btnHariBerikut">Berikutnya ▶</button>
+      </div>
+      <h3 id="riwayatJudul"></h3>
+      <div class="row3" id="riwayatMetrik"></div>
+      <hr>
+      <div class="judul-seksi">🍽️ Produk pada Tanggal Ini</div>
+      <div id="tabelRiwayat"></div>
+      <hr>
+      <div class="judul-seksi">💾 Cadangan Data</div>
+      <div class="row2">
+        <button class="btn" id="btnCsv">⬇️ Unduh CSV (semua riwayat)</button>
+        <button class="btn" id="btnJson">⬇️ Unduh Backup JSON</button>
+      </div>
+      <div class="kecil" style="margin-top:8px">Simpan filenya sesekali supaya catatanmu aman (mis. sebelum
+        ganti HP atau bersihkan browser).</div>
+    </section>
+
+    <!-- ================= RINGKASAN 7 HARI ================= -->
+    <section class="page" id="page-mingguan">
+      <div class="judul-seksi">📈 Ringkasan 7 Hari</div>
+      <div class="sub-seksi">Persentase konsumsi terhadap batas harian (7 hari terakhir).</div>
+      <div class="chart">
+        <div class="chart-grid" id="chartGrid"></div>
+        <div class="chart-label" id="chartLabel"></div>
+        <div class="legend">🍬 Gula &nbsp;·&nbsp; 🧂 Natrium &nbsp;·&nbsp; 🥑 Lemak — garis putus-putus = batas 100%</div>
+      </div>
+      <div class="row3" id="mingguanAngka"></div>
+      <div class="judul-seksi">📋 Rincian per hari</div>
+      <div class="panel" id="mingguanRincian"></div>
+    </section>
+
+    <!-- ================= EDUKASI ================= -->
+    <section class="page" id="page-edukasi">
+      <div class="judul-seksi">📖 Edukasi GGL</div>
+      <div class="sub-seksi">Gula, Garam (Natrium) &amp; Lemak</div>
+      <div class="panel">
+        <p><b>Apa itu GGL?</b> GGL = <b>Gula, Garam, Lemak</b> — tiga zat gizi yang paling sering berlebih pada
+        makanan &amp; minuman kemasan dan berkaitan dengan risiko obesitas, diabetes, hipertensi, dan penyakit
+        jantung.</p>
+        <h4>Batas konsumsi harian (dewasa)</h4>
+        <table class="plain">
+          <tr><th>Zat</th><th>Batas/hari</th><th>Setara</th></tr>
+          <tr><td>🍬 Gula</td><td>50 g</td><td>± 4 sendok makan</td></tr>
+          <tr><td>🧂 Garam/Natrium</td><td>2.000 mg natrium</td><td>± 1 sendok teh garam (5 g)</td></tr>
+          <tr><td>🥑 Lemak</td><td>67 g</td><td>± 5 sendok makan</td></tr>
+        </table>
+        <p class="kecil"><i>Sumber: Permenkes RI No. 30 Tahun 2013 (informasi GGL pada pangan olahan) &amp;
+        rekomendasi WHO. Kebutuhan tiap orang bisa berbeda.</i></p>
+        <h4>Arti warna</h4>
+        <ul>
+          <li>🟢 <b>Hijau</b> — konsumsi masih di bawah 50% batas harian: aman.</li>
+          <li>🟡 <b>Kuning</b> — sudah 50–99%: mulai perhatikan konsumsi berikutnya.</li>
+          <li>🔴 <b>Merah</b> — sudah ≥100%: melebihi batas harian; batasi asupan lain.</li>
+        </ul>
+        <h4>Tips</h4>
+        <ol>
+          <li>Baca label <b>Informasi Nilai Gizi</b> sebelum membeli/mengonsumsi.</li>
+          <li>Perhatikan <b>takaran saji</b> — satu kemasan bisa berisi beberapa sajian!</li>
+          <li>Batasi minuman manis, camilan asin, dan gorengan dalam sehari.</li>
+          <li>Utamakan air putih, buah, sayur, dan makanan segar.</li>
+        </ol>
+        <h4>Cara memakai GiziLens</h4>
+        <ol>
+          <li><b>📷 Scan Produk</b> → foto label Informasi Nilai Gizi (atau pilih foto dari galeri).</li>
+          <li><b>🔎 Periksa hasil</b> → pastikan angka gula/natrium/lemak sesuai label; edit kalau perlu.</li>
+          <li><b>🍽️ Pilih jumlah sajian</b> yang benar-benar kamu konsumsi (bisa 0,5 · 1 · 1,5 · dst).</li>
+          <li>Lihat <b>dampaknya</b> ke total harian sebelum memutuskan.</li>
+          <li>Tekan <b>➕ Tambahkan ke GGL Hari Ini</b> — catatan tersimpan di perangkatmu.</li>
+          <li>Pantau <b>📊 GGL Hari Ini</b>, <b>📅 Riwayat</b>, dan <b>📈 Ringkasan 7 Hari</b>.</li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- ================= PENGATURAN ================= -->
+    <section class="page" id="page-pengaturan">
+      <div class="judul-seksi">⚙️ Pengaturan</div>
+      <div class="sub-seksi">Batas harian, ambang warna, dan kunci AI.</div>
+
+      <div class="judul-seksi">Batas harian (GGL)</div>
+      <div class="row3">
+        <div class="field"><label>Gula (g/hari)</label><input type="number" id="setGula" step="1" min="1"></div>
+        <div class="field"><label>Natrium (mg/hari)</label><input type="number" id="setNatrium" step="10" min="1"></div>
+        <div class="field"><label>Lemak (g/hari)</label><input type="number" id="setLemak" step="1" min="1"></div>
+      </div>
+      <div class="judul-seksi">Ambang warna</div>
+      <div class="row2">
+        <div class="field"><label>Kuning mulai dari (%)</label><input type="number" id="setKuning" step="1" min="1"></div>
+        <div class="field"><label>Merah mulai dari (%)</label><input type="number" id="setMerah" step="1" min="1"></div>
+      </div>
+      <p class="kecil">Baku: gula 50 g · natrium 2.000 mg · lemak 67 g per hari; kuning ≥50%, merah ≥100%.
+        Sumber: Permenkes RI No. 30 Tahun 2013 &amp; rekomendasi WHO.</p>
+      <button class="btn btn-primary" id="btnSimpanSet">💾 Simpan pengaturan</button>
+      <button class="btn" id="btnResetSet">↩️ Kembalikan ke baku</button>
+
+      <hr>
+      <div class="judul-seksi">🤖 Kunci AI Vision (Google Gemini) — opsional</div>
+      <div class="panel kecil">
+        Kalau kunci diisi, foto label dibaca oleh <b>AI Vision Gemini</b> (paling akurat, terutama label
+        2 bahasa). Kalau kosong, GiziLens memakai <b>OCR gratis di dalam HP</b> (Tesseract).
+        Ambil kunci gratis di <b>aistudio.google.com/apikey</b>. Kunci hanya disimpan di perangkat ini.
+      </div>
+      <div class="field"><label>GEMINI_API_KEY</label>
+        <input type="password" id="setGemini" placeholder="tempel kunci di sini (kosongkan bila tidak dipakai)")
+      </div>
+      <div class="row2">
+        <button class="btn btn-primary" id="btnSimpanKey">💾 Simpan kunci</button>
+        <button class="btn" id="btnHapusKey">🗑️ Hapus kunci</button>
+      </div>
+      <div class="field"><label><input type="checkbox" id="setTesseract"> Pakai OCR di HP (Tesseract) kalau
+        kunci AI kosong/gagal</label></div>
+
+      <hr>
+      <div class="judul-seksi">💾 Data</div>
+      <div class="row2">
+        <button class="btn" id="btnBackup">⬇️ Unduh backup JSON</button>
+        <button class="btn" id="btnRestore">⬆️ Pulihkan dari backup</button>
+      </div>
+      <input type="file" id="fileRestore" accept=".json,application/json" hidden>
+      <button class="btn btn-danger" id="btnHapusData">🗑️ Hapus SEMUA catatan (hati-hati!)</button>
+      <p class="kecil" id="infoData"></p>
+    </section>
+
+    <!-- ================= TENTANG ================= -->
+    <section class="page" id="page-tentang">
+      <div class="judul-seksi">ℹ️ Tentang GiziLens</div>
+      <div class="panel">
+        <p><b>GiziLens</b> adalah alat edukasi &amp; pencatatan konsumsi GGL (Gula, Garam/Natrium, Lemak) dari
+        label Informasi Nilai Gizi makanan/minuman kemasan.</p>
+        <ul>
+          <li><b>Pembacaan label</b>: kamera + AI/OCR. Bila kunci <code>GEMINI_API_KEY</code> diisi, foto
+            dikirim ke <b>AI Vision Google (Gemini)</b>; kalau tidak, dipakai <b>OCR Tesseract di HP</b>
+            (gratis, offline setelah model terunduh). Foto tidak disimpan.</li>
+          <li><b>Penyimpanan</b>: catatan disimpan di <b>perangkatmu sendiri</b> (localStorage browser) —
+            riwayat tetap ada walau aplikasi ditutup, tidak dikirim ke server mana pun.</li>
+          <li><b>Versi ini</b>: HTML + JavaScript satu file — bisa dibuka di HP tanpa server,
+            bisa dipasang ke layar utama (Add to Home Screen) dan jalan offline.</li>
+        </ul>
+        <h4>Sumber batas GGL</h4>
+        <ul>
+          <li><b>Permenkes RI No. 30 Tahun 2013</b> — Informasi Kandungan Gula, Garam, dan Lemak untuk Pangan
+            Olahan &amp; Pangan Siap Saji (gula ≤ 50 g, natrium ≤ 2.000 mg, lemak ≤ 67 g per hari).</li>
+          <li><b>WHO</b> — rekomendasi gula &lt; 10% energi &amp; natrium &lt; 2.000 mg/hari.</li>
+          <li>AAL energi 2.150 kkal dipakai label pangan Indonesia (BPOM) untuk %AKG.</li>
+        </ul>
+        <h4>⚠️ Disclaimer</h4>
+        <p>GiziLens merupakan <b>alat edukasi dan pencatatan konsumsi</b>. Hasil dihitung berdasarkan informasi
+        nilai gizi pada label produk dan jumlah konsumsi yang dicatat pengguna. Hasil pembacaan AI/OCR dapat
+        mengalami kesalahan — selalu periksa kembali dengan label asli produk. Batas konsumsi yang digunakan
+        merupakan acuan umum dan kebutuhan setiap individu dapat berbeda. GiziLens <b>tidak digunakan untuk
+        diagnosis</b> atau menggantikan konsultasi dengan dokter maupun ahli gizi.</p>
+        <p class="kecil"><i>Dikembangkan oleh Subdep Gizi RSPAL dr. Ramelan. © 2026</i></p>
+      </div>
+    </section>
+
+    <div class="footer-app">GiziLens · alat edukasi &amp; pencatatan konsumsi GGL · dibuat oleh Subdep Gizi
+      RSPAL dr. Ramelan · © 2026</div>
+  </main>
+</div>
+
+<div class="toast" id="toast" hidden></div>
+
+<script>
+/* ==========================================================================
+   GiziLens (versi JavaScript) — mesin inti
+   1) config + util format Indonesia
+   2) parser label (gula/natrium/lemak/takaran saji/sajian per kemasan)
+   3) kalkulator level warna & dampak harian
+   4) penyimpanan catatan (localStorage) + ringkasan
+   Semua fungsi digabung ke window.GZ supaya gampang diuji.
+   ========================================================================== */
+const GZ = {};
+
+/* ---------- 1. config ---------- */
+GZ.APP_NAME = "GiziLens";
+GZ.ORG = "Subdep Gizi RSPAL dr. Ramelan";
+GZ.DEFAULT_LIMITS = { sugar_g: 50, sodium_mg: 2000, fat_g: 67 };
+GZ.DEFAULT_THRESHOLDS = { warning: 50, danger: 100 };
+GZ.COLORS = { hijau: "#22c55e", kuning: "#f59e0b", merah: "#ef4444" };
+GZ.BG_SOFT = { hijau: "#E8F9EF", kuning: "#FEF3E2", merah: "#FDECEC" };
+GZ.SALT_FACTOR = 2.5 / 1000;          // 2.000 mg natrium ≈ 5 g garam
+GZ.NUTRIENTS = [
+  { key: "gula",    emoji: "🍬", label: "GULA",         jenis: "Gula",    unit: "g",  limitKey: "sugar_g",  db: "sugar_g"  },
+  { key: "natrium", emoji: "🧂", label: "GARAM/NATRIUM", jenis: "Natrium", unit: "mg", limitKey: "sodium_mg", db: "sodium_mg" },
+  { key: "lemak",   emoji: "🥑", label: "LEMAK TOTAL",   jenis: "Lemak",   unit: "g",  limitKey: "fat_g",    db: "fat_g"    }
+];
+GZ.STORE_KEY = "gizilens_v1";
+
+/* ---------- 2. util ---------- */
+GZ.fmtJumlah = function (v) {
+  if (v === null || v === undefined || isNaN(v)) return "—";
+  v = Number(v);
+  if (Math.abs(v - Math.round(v)) < 1e-9) return String(Math.round(v)).replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  return v.toFixed(1).replace(".", ",");
+};
+GZ.fmtPersen = function (p) {
+  if (p === null || p === undefined || isNaN(p)) return "—";
+  p = Number(p);
+  if (Math.abs(p - Math.round(p)) < 1e-9) return String(Math.round(p));
+  return p.toFixed(1).replace(".", ",");
+};
+GZ.fmtDecimal = function (v, d) {
+  d = (d === undefined) ? 1 : d;
+  return Number(v || 0).toFixed(d).replace(".", ",");
+};
+GZ.saltGram = function (sodiumMg) { return Number(sodiumMg || 0) * GZ.SALT_FACTOR; };
+GZ.todayISO = function () {
+  const d = new Date();
+  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+};
+GZ.nowTime = function () {
+  const d = new Date();
+  return String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
+};
+const HARI_ID = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+const HARI_SINGKAT = ["Sen", "Sel", "Rab", "Kam", "Jum", "Sab", "Min"];
+const BULAN_ID = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus",
+  "September", "Oktober", "November", "Desember"];
+GZ.tanggalID = function (iso) {
+  const d = new Date(iso + "T00:00:00");
+  return HARI_ID[d.getDay()] + ", " + d.getDate() + " " + BULAN_ID[d.getMonth()] + " " + d.getFullYear();
+};
+GZ.tglPendek = function (iso) {
+  const d = new Date(iso + "T00:00:00");
+  return d.getDate() + "/" + (d.getMonth() + 1);
+};
+GZ.hariSingkat = function (iso) { return HARI_SINGKAT[new Date(iso + "T00:00:00").getDay()]; };
+GZ.geserHari = function (iso, n) {
+  const d = new Date(iso + "T00:00:00");
+  d.setDate(d.getDate() + n);
+  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+};
+
+/* ---------- 3. parser label ---------- */
+const ANGKA = "\\d+(?:[.,]\\d+)?";
+const SATUAN = "(?:mcg|µg|mg|gr|gram|grams?|g|kkal|kcal|ml|%)";
+GZ.FIELD_SPEC = {
+  gula: {
+    pola: [/gula\s+total/i, /total\s+gula/i, /total\s+sugars?/i, /sugars?\s+total/i,
+           /added\s+sugars?/i, /\bgula\b/i, /\bsugars?\b/i],
+    hindari: /alkohol|alcohol|serat|fiber/i, satuan: "g"
+  },
+  natrium: {
+    pola: [/\bnatrium\b/i, /\bsodium\b/i, /\bna\b/i],
+    hindari: /klorida|chloride/i, satuan: "mg"
+  },
+  lemak: {
+    pola: [/lemak\s+total/i, /total\s+lemak/i, /total\s+fat/i, /\blemak\b/i, /\bfat\b/i],
+    hindari: /jenuh|saturated|trans|tidak\s+jenuh|mono|poly|omega|kolesterol|cholesterol/i, satuan: "g"
+  },
+  protein: { pola: [/\bprotein\b/i], hindari: null, satuan: "g" },
+  karbohidrat: {
+    pola: [/karbohidrat\s+total/i, /total\s+karbohidrat/i, /carbohydrates?\s+total/i,
+           /\bkarbohidrat\b/i, /\bcarbohydrates?\b/i],
+    hindari: /serat|fiber|gula\b/i, satuan: "g"
+  },
+  energi: {
+    pola: [/energi\s+total/i, /total\s+energi/i, /\benergi\b/i, /\benergy\b/i],
+    hindari: null, satuan: "kkal"
+  }
+};
+GZ.BARIS_LAIN = /gula|sugars?|natrium|sodium|lemak|fat|protein|karbohidrat|carb|energi|energy|saji|kemasan|serving|serat|fiber|jenuh|saturated|trans|kolesterol|cholesterol/i;
+GZ.POLA_TAKARAN_SAJI = /takaran\s+saji|ukuran\s+saji|per\s+sajian|serving\s+size/i;
+GZ.POLA_SAJIAN_KEMASAN = /jumlah\s+sajian?\s+per\s+kemasan|sajian?\s+per\s+kemasan|sajian?\s+dalam\s+kemasan|servings?\s+per\s+(?:package|container|pouch|box|bag)/i;
+
+GZ._floatId = function (s) {
+  s = String(s).trim().replace(/\s/g, "");
+  if (!/^-?\d+(?:[.,]\d+)?$/.test(s)) return null;
+  if (s.indexOf(",") >= 0 && s.indexOf(".") >= 0) s = s.replace(/\./g, "").replace(",", ".");
+  else if (s.indexOf(",") >= 0) s = s.replace(",", ".");
+  const v = parseFloat(s);
+  return isNaN(v) ? null : v;
+};
+
+GZ._tokenAngka = function (teks) {
+  const re = new RegExp("(" + ANGKA + ")\\s*(" + SATUAN + ")?\\b", "gi");
+  const hasil = [];
+  let m;
+  while ((m = re.exec(teks)) !== null) {
+    if (m[2] && m[2].toLowerCase() === "%") continue;
+    const val = GZ._floatId(m[1]);
+    if (val !== null) hasil.push([val, (m[2] || "").toLowerCase() || null]);
+  }
+  return hasil;
+};
+
+GZ._keluargaSatuan = function (satuan) {
+  if (!satuan) return "";
+  if (["mg", "mcg", "µg"].indexOf(satuan) >= 0) return "mg";
+  if (["g", "gr", "gram", "grams"].indexOf(satuan) >= 0) return "g";
+  if (["kkal", "kcal"].indexOf(satuan) >= 0) return "kkal";
+  return "";
+};
+
+GZ._konversi = function (nilai, satuan, target) {
+  const fam = GZ._keluargaSatuan(satuan);
+  if (fam === "g" && target === "mg") return nilai * 1000;
+  if (fam === "mg" && target === "g") return nilai / 1000;
+  return nilai;
+};
+
+GZ._ambilNilaiBaris = function (teks, target) {
+  const tokens = GZ._tokenAngka(teks);
+  if (!tokens.length) return null;
+  const targetFam = GZ._keluargaSatuan(target) || target;
+  for (const t of tokens) {                       // 1) satuan cocok
+    const fam = GZ._keluargaSatuan(t[1]);
+    if (t[1] !== null && fam === targetFam) return GZ._konversi(t[0], t[1], target);
+  }
+  for (const t of tokens) if (t[1] === null) return t[0];   // 2) angka polos
+  return null;
+};
+
+GZ._cariZat = function (barisList, spec, targetSatuan) {
+  for (const pola of spec.pola) {
+    for (let i = 0; i < barisList.length; i++) {
+      const teks = barisList[i];
+      const m = teks.match(pola);
+      if (!m) continue;
+      if (spec.hindari && spec.hindari.test(teks)) continue;
+      const kanan = teks.slice(m.index + m[0].length);
+      let nilai = GZ._ambilNilaiBaris(kanan, targetSatuan);
+      if (nilai === null) nilai = GZ._ambilNilaiBaris(teks, targetSatuan);
+      if (nilai === null) {                        // intip 1–2 baris berikutnya
+        for (let j = i + 1; j < Math.min(i + 3, barisList.length); j++) {
+          if (GZ.BARIS_LAIN.test(barisList[j])) break;
+          nilai = GZ._ambilNilaiBaris(barisList[j], targetSatuan);
+          if (nilai !== null) break;
+        }
+      }
+      if (nilai !== null) return [Math.round(nilai * 100) / 100, teks];
+    }
+  }
+  return [null, null];
+};
+
+GZ.parseLabelBaris = function (barisList) {
+  const bersih = (barisList || []).map(b => String(b || "").trim()).filter(b => b.length);
+  const hasil = {
+    nama_produk: null, takaran_saji: null, sajian_per_kemasan: 1,
+    energi: null, protein: null, karbohidrat: null, gula: null, natrium: null, lemak: null
+  };
+  ["energi", "protein", "karbohidrat", "lemak", "gula", "natrium"].forEach(function (kunci) {
+    hasil[kunci] = GZ._cariZat(bersih, GZ.FIELD_SPEC[kunci], GZ.FIELD_SPEC[kunci].satuan)[0];
+  });
+
+  // --- takaran saji ---
+  for (let i = 0; i < bersih.length; i++) {
+    const teks = bersih[i];
+    if (GZ.BARIS_LAIN.test(teks) && !GZ.POLA_TAKARAN_SAJI.test(teks)) continue;
+    const m = teks.match(GZ.POLA_TAKARAN_SAJI);
+    if (m) {
+      let mentah = teks.slice(m.index + m[0].length).replace(/^[\s:–—-]+/, "").replace(/\s+/g, " ").slice(0, 60);
+      if (!mentah && i + 1 < bersih.length) mentah = bersih[i + 1].slice(0, 60);
+      hasil.takaran_saji = mentah || null;
+      break;
+    }
+  }
+
+  // --- jumlah sajian per kemasan ---
+  for (let i = 0; i < bersih.length; i++) {
+    const m = bersih[i].match(GZ.POLA_SAJIAN_KEMASAN);
+    if (!m) continue;
+    let kanan = bersih[i].slice(m.index + m[0].length);
+    if (!kanan.trim() && i + 1 < bersih.length) kanan = bersih[i + 1];
+    for (const t of GZ._tokenAngka(kanan)) {
+      if (t[0] >= 1 && t[0] <= 60) { hasil.sajian_per_kemasan = Math.round(t[0]); break; }
+    }
+    break;
+  }
+  return hasil;
+};
+
+/* ---------- 4. kalkulator ---------- */
+GZ.statusPersen = function (persen, ambang) {
+  ambang = ambang || GZ.DEFAULT_THRESHOLDS;
+  if (persen >= ambang.danger) return "merah";
+  if (persen >= ambang.warning) return "kuning";
+  return "hijau";
+};
+GZ.BADGE = {
+  hijau: ["🟢 HIJAU", "Aman"],
+  kuning: ["🟡 KUNING", "Perlu perhatian"],
+  merah: ["🔴 MERAH", "Melebihi batas harian"]
+};
+GZ.persenDari = function (nilai, batas) { return batas ? (Number(nilai) / Number(batas)) * 100 : 0; };
+
+GZ.ringkasZat = function (nilai, batas, ambang) {
+  nilai = Number(nilai || 0); batas = Number(batas || 0);
+  const pct = GZ.persenDari(nilai, batas);
+  const warna = GZ.statusPersen(pct, ambang);
+  return {
+    konsumsi: nilai, batas: batas, persen: pct, warna: warna,
+    badge: GZ.BADGE[warna][0], pesan: GZ.BADGE[warna][1],
+    sisa: Math.max(batas - nilai, 0), lebih: Math.max(nilai - batas, 0)
+  };
+};
+GZ.ringkasGaram = function (natrium, batas, ambang) {
+  const r = GZ.ringkasZat(natrium, batas, ambang);
+  r.garam_g = GZ.saltGram(natrium);
+  r.garam_batas_g = GZ.saltGram(batas);
+  r.garam_sisa_g = Math.max(r.garam_batas_g - r.garam_g, 0);
+  return r;
+};
+GZ.totalStatus = function (ringkasan) {
+  const list = Object.keys(ringkasan).map(k => ringkasan[k]).filter(Boolean);
+  if (list.some(r => r.warna === "merah")) return "merah";
+  if (list.some(r => r.warna === "kuning")) return "kuning";
+  return "hijau";
+};
+
+GZ.statNutrisi = function (nilai, batas, ambang, skala) {
+  skala = (skala === undefined) ? 1 : skala;
+  const total = Number(nilai || 0) * skala;
+  const pct = GZ.persenDari(total, batas);
+  const warna = GZ.statusPersen(pct, ambang);
+  return { nilai: Math.round(total * 100) / 100, persen: pct, warna: warna,
+           badge: GZ.BADGE[warna][0], pesan: GZ.BADGE[warna][1] };
+};
+
+GZ.analisisProduk = function (data, limits, ambang) {
+  limits = limits || GZ.DEFAULT_LIMITS;
+  ambang = ambang || GZ.DEFAULT_THRESHOLDS;
+  const sajian = Math.max(1, parseInt(data.sajian_per_kemasan || 1, 10) || 1);
+  const perSajian = {}, perKemasan = {};
+  GZ.NUTRIENTS.forEach(function (meta) {
+    const nilai = data[meta.key];
+    if (nilai === null || nilai === undefined || nilai === "") {
+      perSajian[meta.key] = null; perKemasan[meta.key] = null; return;
+    }
+    const batas = limits[meta.limitKey];
+    perSajian[meta.key] = GZ.statNutrisi(nilai, batas, ambang, 1);
+    perKemasan[meta.key] = GZ.statNutrisi(nilai, batas, ambang, sajian);
+  });
+  const semua = Object.keys(perSajian).map(k => perSajian[k])
+    .concat(Object.keys(perKemasan).map(k => perKemasan[k])).filter(Boolean);
+  return {
+    per_sajian: perSajian, per_kemasan: perKemasan, sajian_per_kemasan: sajian,
+    ada_merah: semua.some(s => s.warna === "merah")
+  };
+};
+
+GZ.nilaiDikonsumsi = function (perSajian, jumlahSajian) {
+  return {
+    sugar_g: Number(perSajian.gula || 0) * Number(jumlahSajian),
+    sodium_mg: Number(perSajian.natrium || 0) * Number(jumlahSajian),
+    fat_g: Number(perSajian.lemak || 0) * Number(jumlahSajian)
+  };
+};
+
+GZ.dampakPenambahan = function (totalHariIni, dikonsumsi, ambang, limits) {
+  ambang = ambang || GZ.DEFAULT_THRESHOLDS;
+  limits = limits || GZ.DEFAULT_LIMITS;
+  const peta = { sugar_g: ["gula", "sugar_g"], sodium_mg: ["natrium", "sodium_mg"], fat_g: ["lemak", "fat_g"] };
+  const hasil = {};
+  Object.keys(peta).forEach(function (kolom) {
+    const kunci = peta[kolom][0], batasKey = peta[kolom][1];
+    const now = Number((totalHariIni || {})[kolom] || 0);
+    const tambah = Number((dikonsumsi || {})[kolom] || 0);
+    const prediksi = now + tambah;
+    const batas = Number(limits[batasKey]);
+    const pctPred = GZ.persenDari(prediksi, batas);
+    hasil[kunci] = {
+      sekarang: now, tambah: tambah, prediksi: prediksi, batas: batas,
+      persen_sekarang: GZ.persenDari(now, batas), persen_prediksi: pctPred,
+      warna_prediksi: GZ.statusPersen(pctPred, ambang),
+      lewat: Math.max(prediksi - batas, 0)
+    };
+  });
+  return hasil;
+};
+
+GZ.kontributorTertinggi = function (barisHari, kolom) {
+  let terbaik = null;
+  (barisHari || []).forEach(function (b) {
+    const nilai = Number(b[kolom] || 0);
+    if (terbaik === null || nilai > terbaik.nilai) {
+      terbaik = { id: b.id, nama: b.product_name || "Tanpa nama", nilai: nilai, waktu: b.time };
+    }
+  });
+  return terbaik;
+};
+
+/* ---------- 5. penyimpanan & ringkasan ---------- */
+GZ.state = { entries: [], settings: { limits: Object.assign({}, GZ.DEFAULT_LIMITS),
+  thresholds: Object.assign({}, GZ.DEFAULT_THRESHOLDS), geminiKey: "", tesseract: true } };
+GZ._nextId = 1;
+
+GZ.load = function () {
+  try {
+    const mentah = localStorage.getItem(GZ.STORE_KEY);
+    if (mentah) {
+      const d = JSON.parse(mentah);
+      if (d && Array.isArray(d.entries)) {
+        GZ.state.entries = d.entries;
+        GZ.state.settings = Object.assign(GZ.state.settings, d.settings || {});
+        GZ.state.settings.limits = Object.assign({}, GZ.DEFAULT_LIMITS, (d.settings || {}).limits || {});
+        GZ.state.settings.thresholds = Object.assign({}, GZ.DEFAULT_THRESHOLDS, (d.settings || {}).thresholds || {});
+      }
+    }
+  } catch (e) { console.warn("Gagal membaca catatan:", e); }
+  GZ._nextId = GZ.state.entries.reduce((m, e) => Math.max(m, Number(e.id) || 0), 0) + 1;
+};
+
+GZ.save = function () {
+  try { localStorage.setItem(GZ.STORE_KEY, JSON.stringify({ entries: GZ.state.entries, settings: GZ.state.settings })); }
+  catch (e) { console.warn("Gagal menyimpan:", e); }
+};
+
+GZ.limits = function () { return GZ.state.settings.limits; };
+GZ.thresholds = function () { return GZ.state.settings.thresholds; };
+GZ.entriesFor = function (date) { return GZ.state.entries.filter(e => e.date === date).sort((a, b) => (a.time > b.time ? 1 : -1)); };
+
+GZ.totalsFor = function (date) {
+  const t = { sugar_g: 0, sodium_mg: 0, salt_g: 0, fat_g: 0, n_produk: 0 };
+  GZ.entriesFor(date).forEach(function (e) {
+    t.sugar_g += Number(e.sugar_g || 0); t.sodium_mg += Number(e.sodium_mg || 0);
+    t.fat_g += Number(e.fat_g || 0); t.n_produk += 1;
+  });
+  t.salt_g = GZ.saltGram(t.sodium_mg);
+  return t;
+};
+
+GZ.ringkasanTanggal = function (date) {
+  date = date || GZ.todayISO();
+  const total = GZ.totalsFor(date), lim = GZ.limits(), amb = GZ.thresholds();
+  const ringkas = {
+    gula: GZ.ringkasZat(total.sugar_g, lim.sugar_g, amb),
+    natrium: GZ.ringkasGaram(total.sodium_mg, lim.sodium_mg, amb),
+    lemak: GZ.ringkasZat(total.fat_g, lim.fat_g, amb)
+  };
+  return { tanggal: date, total: total, baris: GZ.entriesFor(date), ringkasan: ringkas,
+           status_keseluruhan: GZ.totalStatus(ringkas) };
+};
+
+GZ.tambahCatatan = function (nama, takaran, jumlahSajian, perSajian, tanggal, jam) {
+  const dikonsumsi = GZ.nilaiDikonsumsi(perSajian, jumlahSajian);
+  const entri = {
+    id: GZ._nextId++, date: tanggal || GZ.todayISO(), time: jam || GZ.nowTime(),
+    product_name: nama || "Produk (tanpa nama)", serving_size: takaran || "",
+    consumed_servings: Number(jumlahSajian),
+    sugar_g: Math.round(dikonsumsi.sugar_g * 1000) / 1000,
+    sodium_mg: Math.round(dikonsumsi.sodium_mg * 1000) / 1000,
+    salt_g: GZ.saltGram(dikonsumsi.sodium_mg),
+    fat_g: Math.round(dikonsumsi.fat_g * 1000) / 1000
+  };
+  GZ.state.entries.push(entri);
+  GZ.save();
+  return entri.id;
+};
+
+GZ.ubahCatatan = function (id, opsi) {
+  const e = GZ.state.entries.find(x => Number(x.id) === Number(id));
+  if (!e) return null;
+  const lama = Math.max(Number(e.consumed_servings || 0), 0.01);
+  if (opsi.consumed_servings !== undefined && Number(opsi.consumed_servings) !== lama) {
+    const baru = Number(opsi.consumed_servings);
+    const rasio = baru / lama;
+    e.sugar_g = Math.round(Number(e.sugar_g || 0) * rasio * 1000) / 1000;
+    e.sodium_mg = Math.round(Number(e.sodium_mg || 0) * rasio * 1000) / 1000;
+    e.fat_g = Math.round(Number(e.fat_g || 0) * rasio * 1000) / 1000;
+    e.salt_g = GZ.saltGram(e.sodium_mg);
+    e.consumed_servings = baru;
+  }
+  if (opsi.product_name !== undefined) e.product_name = opsi.product_name;
+  if (opsi.serving_size !== undefined) e.serving_size = opsi.serving_size;
+  if (opsi.sugar_g !== undefined) e.sugar_g = Number(opsi.sugar_g);
+  if (opsi.sodium_mg !== undefined) { e.sodium_mg = Number(opsi.sodium_mg); e.salt_g = GZ.saltGram(e.sodium_mg); }
+  if (opsi.fat_g !== undefined) e.fat_g = Number(opsi.fat_g);
+  GZ.save();
+  return e;
+};
+
+GZ.hapusCatatan = function (id) {
+  GZ.state.entries = GZ.state.entries.filter(x => Number(x.id) !== Number(id));
+  GZ.save();
+};
+
+GZ.ringkasan7Hari = function (akhir) {
+  akhir = akhir || GZ.todayISO();
+  const lim = GZ.limits();
+  const out = { hari: [], lewat: { sugar_g: 0, sodium_mg: 0, fat_g: 0 } };
+  for (let i = 6; i >= 0; i--) {
+    const tgl = GZ.geserHari(akhir, -i);
+    const t = GZ.totalsFor(tgl);
+    out.hari.push({
+      tanggal: tgl, label: GZ.tglPendek(tgl), hari_nama: GZ.hariSingkat(tgl),
+      sugar_g: t.sugar_g, sodium_mg: t.sodium_mg, fat_g: t.fat_g,
+      sugar_persen: GZ.persenDari(t.sugar_g, lim.sugar_g),
+      sodium_persen: GZ.persenDari(t.sodium_mg, lim.sodium_mg),
+      fat_persen: GZ.persenDari(t.fat_g, lim.fat_g)
+    });
+  }
+  out.hari.forEach(function (h) {
+    if (h.sugar_persen >= 100) out.lewat.sugar_g += 1;
+    if (h.sodium_persen >= 100) out.lewat.sodium_mg += 1;
+    if (h.fat_persen >= 100) out.lewat.fat_g += 1;
+  });
+  return out;
+};
+
+GZ.csvSemua = function () {
+  const kolom = ["id", "date", "time", "product_name", "serving_size", "consumed_servings",
+                 "sugar_g", "sodium_mg", "salt_g", "fat_g"];
+  const baris = [kolom.join(",")];
+  GZ.state.entries.slice().sort((a, b) => (a.date + a.time < b.date + b.time ? 1 : -1)).forEach(function (e) {
+    baris.push(kolom.map(k => {
+      const v = e[k] === undefined || e[k] === null ? "" : e[k];
+      return '"' + String(v).replace(/"/g, '""') + '"';
+    }).join(","));
+  });
+  return "\ufeff" + baris.join("\r\n");
+};
+
+window.GZ = GZ;
+/* ==========================================================================
+   BAGIAN UI: halaman, kamera, pembaca AI/OCR, tabel, grafik, pengaturan
+   ========================================================================== */
+const $ = s => document.querySelector(s);
+const $$ = s => Array.prototype.slice.call(document.querySelectorAll(s));
+const esc = s => String(s == null ? "" : s).replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+const attr = s => String(s == null ? "" : s).replace(/"/g, "&quot;");
+let toastTimer = null;
+function toast(msg, ms) {
+  const t = $("#toast");
+  t.textContent = msg; t.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.hidden = true; }, ms || 2600);
+}
+function kabarProses(teks) { const k = $("#prosesKabar"); if (k) k.textContent = teks || ""; }
+
+/* ---------- komponen kartu ---------- */
+function pill(warna, teks) {
+  return '<span class="pill" style="color:' + (GZ.COLORS[warna] || "#333") + ";background:" +
+         (GZ.BG_SOFT[warna] || "#eee") + '">' + teks + "</span>";
+}
+function bar(persen, warna) {
+  const lebar = Math.max(2, Math.min(100, Number(persen) || 0)).toFixed(1);
+  return '<div class="bar"><i style="width:' + lebar + "%;background:" + (GZ.COLORS[warna] || "#888") + '"></i></div>';
+}
+function kartuTotal(emoji, label, r, unit, extra) {
+  const w = GZ.COLORS[r.warna] || "#888";
+  const sisa = r.lebih > 0
+    ? '<div class="pct" style="color:' + GZ.COLORS.merah + ';font-weight:700">🔴 +' + GZ.fmtJumlah(r.lebih) + " " + unit + " di atas batas harian</div>"
+    : '<div class="pct">Sisa: ' + GZ.fmtJumlah(r.sisa) + " " + unit + "</div>";
+  const tambahan = (extra || []).map(t => '<div class="pct">' + t + "</div>").join("");
+  return '<div class="kartu-ggl" style="border-top-color:' + w + '">' +
+    '<div class="head">' + emoji + " " + label + "</div>" +
+    '<div class="nilai">' + GZ.fmtJumlah(r.konsumsi) + '<span class="unit"> / ' + GZ.fmtJumlah(r.batas) + " " + unit + "</span></div>" +
+    tambahan +
+    '<div class="pct" style="font-weight:700">' + GZ.fmtPersen(r.persen) + "% dari batas harian</div>" +
+    bar(r.persen, r.warna) + sisa + pill(r.warna, r.badge) + "</div>";
+}
+function kartuNutrisi(meta, stat) {
+  if (!stat) {
+    return '<div class="kartu-ggl"><div class="head">' + meta.emoji + " " + meta.label + "</div>" +
+      '<div class="nilai">—</div><div class="pct">tidak terbaca / kosong</div></div>';
+  }
+  const w = GZ.COLORS[stat.warna] || "#888";
+  return '<div class="kartu-ggl" style="border-top-color:' + w + '">' +
+    '<div class="head">' + meta.emoji + " " + meta.label + "</div>" +
+    '<div class="nilai">' + GZ.fmtJumlah(stat.nilai) + '<span class="unit"> ' + meta.unit + "</span></div>" +
+    '<div class="pct" style="font-weight:700">' + GZ.fmtPersen(stat.persen) + "% dari batas harian</div>" +
+    bar(stat.persen, stat.warna) +
+    '<div class="pct">' + stat.pesan + "</div>" + pill(stat.warna, stat.badge) + "</div>";
+}
+
+/* ---------- navigasi ---------- */
+const HALAMAN = ["beranda", "scan", "hariini", "riwayat", "mingguan", "edukasi", "pengaturan", "tentang"];
+let halamanAktif = "beranda";
+function bukaHalaman(nama, tanpaKamera) {
+  if (HALAMAN.indexOf(nama) < 0) nama = "beranda";
+  halamanAktif = nama;
+  $$(".page").forEach(p => p.classList.toggle("active", p.id === "page-" + nama));
+  $$(".nav-item").forEach(b => b.classList.toggle("active", b.dataset.page === nama));
+  $("#sidebar").classList.remove("open");
+  window.scrollTo({ top: 0, behavior: "smooth" });
+  if (nama === "beranda") renderBeranda();
+  if (nama === "hariini") renderHariIni();
+  if (nama === "riwayat") renderRiwayat();
+  if (nama === "mingguan") renderMingguan();
+  if (nama === "pengaturan") renderPengaturan();
+  if (nama === "scan" && !tanpaKamera) mulaiKamera();
+}
+
+/* ---------- BERANDA ---------- */
+function renderBeranda() {
+  const r = GZ.ringkasanTanggal();
+  const g = r.ringkasan.gula, n = r.ringkasan.natrium, l = r.ringkasan.lemak;
+  $("#berandaCards").innerHTML =
+    kartuTotal("🍬", "GULA", g, "g") +
+    kartuTotal("🧂", "GARAM/NATRIUM", n, "mg", ["≈ " + GZ.fmtJumlah(n.garam_g) + " / " + GZ.fmtJumlah(n.garam_batas_g) + " g garam"]) +
+    kartuTotal("🥑", "LEMAK TOTAL", l, "g");
+  const b = GZ.BADGE[r.status_keseluruhan];
+  $("#berandaStatus").innerHTML = "Status hari ini: <b>" + b[0] + " · " + b[1] + "</b> · " +
+    (r.total.n_produk ? r.total.n_produk + " produk tercatat" : "belum ada produk tercatat") + ".";
+}
+
+/* ---------- KAMERA ---------- */
+let camStream = null, camFacing = "environment", camSiap = false;
+async function mulaiKamera() {
+  const video = $("#camVideo"), off = $("#camOff");
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    off.hidden = false;
+    off.innerHTML = "📷 Kamera langsung belum bisa dipakai di sini.<br>Pakai <b>pilih foto</b> di bawah, " +
+      "atau buka aplikasi lewat alamat <b>https</b> (mis. GitHub Pages / localhost).";
+    return;
+  }
+  try {
+    hentikanKamera();
+    camStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { ideal: camFacing }, width: { ideal: 1920 }, height: { ideal: 1080 } },
+      audio: false
+    });
+    video.srcObject = camStream;
+    await video.play().catch(() => {});
+    camSiap = true;
+    off.hidden = true;
+    $("#camMsg").textContent = "📷 Silakan scan label informasi gizi produk.";
+  } catch (e) {
+    camSiap = false; off.hidden = false;
+    off.innerHTML = "📷 Kamera tidak bisa dibuka (" + esc(e.name || e.message) + ").<br>" +
+      "Pastikan izin kamera diberikan, atau pakai <b>pilih foto</b> di bawah.";
+    $("#camMsg").textContent = "📷 Silakan scan label informasi gizi produk.";
+  }
+}
+function hentikanKamera() {
+  if (camStream) { camStream.getTracks().forEach(t => t.stop()); camStream = null; }
+  camSiap = false;
+}
+async function ambilFoto() {
+  const video = $("#camVideo");
+  if (!camSiap || !video.videoWidth) { toast("Kamera belum siap — tunggu sebentar atau pakai pilih foto."); return; }
+  const canvas = $("#camCanvas");
+  canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+  canvas.getContext("2d").drawImage(video, 0, 0, canvas.width, canvas.height);
+  const blob = await new Promise(res => canvas.toBlob(res, "image/jpeg", 0.92));
+  if (!blob) { toast("Gagal mengambil gambar, coba lagi."); return; }
+  prosesFoto(blob);
+}
+
+/* ---------- PEMBACA LABEL: Gemini AI Vision -> OCR Tesseract ---------- */
+const PROMPT_GEMINI = [
+  "Kamu pembaca label Informasi Nilai Gizi (nutrition facts) yang teliti.",
+  "Label bisa ditulis 2 bahasa (Indonesia + Inggris) dengan kolom %AKG/%DV — ABAIKAN kolom persen.",
+  "Baca label pada foto, lalu jawab HANYA JSON valid tanpa teks lain:",
+  '{"nama_produk":"nama produk atau null","takaran_saji":"contoh: 250 ml / 1 bungkus (35 g) atau null",',
+  '"sajian_per_kemasan":2,"energi_total_kkal":180,"protein_g":3,"karbohidrat_total_g":12,',
+  '"lemak_total_g":4,"gula_g":18,"natrium_mg":120}',
+  "Aturan:",
+  "- Nilai sesuai TAKARAN SAJI yang tercetak (bukan per 100 g, kecuali label memang per 100 g).",
+  "- Gula = Gula/Gula Total/Sugars/Total Sugars (JANGAN gula alkohol).",
+  "- Natrium = Natrium/Garam (Natrium)/Sodium/Salt.",
+  "- Lemak = Lemak Total/Total Fat (JANGAN lemak jenuh/trans).",
+  "- Kalau satu angka tidak terbaca/ragu, isi null (bukan perkiraan).",
+  "- Angka pakai titik desimal (contoh 4.5)."
+].join("\n");
+const GEMINI_MODELS = ["gemini-2.5-flash", "gemini-2.5-flash-lite", "gemini-2.0-flash", "gemini-flash-latest"];
+
+function blobKeBase64(blob) {
+  return new Promise((res, rej) => {
+    const fr = new FileReader();
+    fr.onload = () => res(String(fr.result).split(",")[1] || "");
+    fr.onerror = () => rej(new Error("gagal membaca foto"));
+    fr.readAsDataURL(blob);
+  });
+}
+async function geminiBaca(blob, apiKey) {
+  const b64 = await blobKeBase64(blob);
+  const mime = blob.type || "image/jpeg";
+  const kendala = [];
+  for (const model of GEMINI_MODELS) {
+    const url = "https://generativelanguage.googleapis.com/v1beta/models/" + model +
+      ":generateContent?key=" + encodeURIComponent(apiKey);
+    try {
+      const resp = await fetch(url, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: PROMPT_GEMINI }, { inline_data: { mime_type: mime, data: b64 } }] }],
+          generationConfig: { temperature: 0, maxOutputTokens: 1024 }
+        })
+      });
+      const data = await resp.json().catch(() => null);
+      if (!resp.ok) {
+        const pesan = (data && data.error && data.error.message) || ("HTTP " + resp.status);
+        kendala.push(model + ": " + pesan);
+        continue;
+      }
+      const teks = (((data || {}).candidates || [])[0] || {}).content;
+      const isi = ((teks || {}).parts || [])[0];
+      if (!isi || !isi.text) { kendala.push(model + ": jawaban kosong"); continue; }
+      const a = isi.text.indexOf("{"), b = isi.text.lastIndexOf("}");
+      if (a < 0 || b < 0) { kendala.push(model + ": jawaban bukan JSON"); continue; }
+      const obj = JSON.parse(isi.text.slice(a, b + 1));
+      obj.__model = model;
+      return obj;
+    } catch (e) {
+      kendala.push(model + ": " + (e.message || e));
+    }
+  }
+  throw new Error(kendala.join(" ; "));
+}
+function geminiKeHasil(d) {
+  const h = { nama_produk: d.nama_produk || null, takaran_saji: d.takaran_saji || null,
+    sajian_per_kemasan: 1, energi: null, protein: null, karbohidrat: null,
+    gula: null, natrium: null, lemak: null };
+  const peta = {
+    sajian_per_kemasan: ["sajian_per_kemasan", "jumlah_sajian_per_kemasan", "servings_per_package", "sajian"],
+    energi: ["energi_total_kkal", "energi_kkal", "energy_kcal", "energi"],
+    protein: ["protein_g", "protein"],
+    karbohidrat: ["karbohidrat_total_g", "carbohydrate_g", "karbohidrat"],
+    gula: ["gula_g", "gula_total_g", "sugar_g", "total_sugar_g", "sugars_g"],
+    natrium: ["natrium_mg", "sodium_mg", "garam_natrium_mg", "salt_mg", "natrium", "sodium"],
+    lemak: ["lemak_total_g", "fat_total_g", "total_fat_g", "lemak_g", "fat_g", "lemak"]
+  };
+  Object.keys(peta).forEach(function (kunci) {
+    for (const k of peta[kunci]) {
+      const v = d[k];
+      if (v === null || v === undefined || v === "" || v === "null") continue;
+      const num = parseFloat(String(v).replace(",", "."));
+      if (isNaN(num)) continue;
+      h[kunci] = (kunci === "sajian_per_kemasan") ? Math.round(num) : Math.round(num * 100) / 100;
+      break;
+    }
+  });
+  if (!h.sajian_per_kemasan) h.sajian_per_kemasan = 1;
+  return h;
+}
+function muatTesseract() {
+  return new Promise((res, rej) => {
+    if (window.Tesseract) return res(window.Tesseract);
+    const s = document.createElement("script");
+    s.src = "https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js";
+    s.onload = () => window.Tesseract ? res(window.Tesseract) : rej(new Error("OCR tidak termuat"));
+    s.onerror = () => rej(new Error("tidak bisa mengunduh OCR (butuh internet sekali saja)"));
+    document.head.appendChild(s);
+  });
+}
+async function ocrBaris(blob) {
+  const T = await muatTesseract();
+  const url = URL.createObjectURL(blob);
+  try {
+    const hasil = await T.recognize(url, "ind+eng", {
+      logger: m => {
+        if (m && m.status) {
+          const p = m.progress ? " " + Math.round(m.progress * 100) + "%" : "";
+          kabarProses("(" + m.status + p + ")");
+        }
+      }
+    });
+    const teks = (hasil && hasil.data && hasil.data.text) || "";
+    return teks.split("\n").map(s => s.trim()).filter(Boolean);
+  } finally { URL.revokeObjectURL(url); }
+}
+async function bacaLabel(blob) {
+  const key = (GZ.state.settings.geminiKey || "").trim();
+  let catatan = null;
+  if (key) {
+    kabarProses("(AI Vision Gemini)");
+    try {
+      const d = await geminiBaca(blob, key);
+      const h = geminiKeHasil(d);
+      h._sumber = "gemini:" + (d.__model || "gemini");
+      h._baris = [];
+      return h;
+    } catch (e) { catatan = e.message || String(e); }
+  }
+  if (GZ.state.settings.tesseract) {
+    kabarProses("(OCR di HP)");
+    try {
+      const baris = await ocrBaris(blob);
+      const h = GZ.parseLabelBaris(baris);
+      h._sumber = "ocr"; h._baris = baris;
+      if (catatan) h._gemini_error = catatan;
+      return h;
+    } catch (e) {
+      return { nama_produk: null, takaran_saji: null, sajian_per_kemasan: 1, gula: null, natrium: null,
+        lemak: null, protein: null, karbohidrat: null, energi: null, _baris: [], _sumber: "gagal",
+        _gemini_error: catatan, _ocr_error: e.message || String(e) };
+    }
+  }
+  return { nama_produk: null, takaran_saji: null, sajian_per_kemasan: 1, gula: null, natrium: null,
+    lemak: null, protein: null, karbohidrat: null, energi: null, _baris: [], _sumber: "gagal",
+    _gemini_error: catatan, _ocr_error: "OCR di HP dimatikan (lihat ⚙️ Pengaturan)" };
+}
+
+/* ---------- ALUR SCAN ---------- */
+let hasilScan = null, sudahDitambah = false;
+async function prosesFoto(blob) {
+  hentikanKamera();
+  $("#scanKamera").hidden = true;
+  $("#scanKonfirmasi").hidden = true;
+  $("#scanProses").hidden = false;
+  $("#prosesPratinjau").innerHTML = '<img src="' + URL.createObjectURL(blob) +
+    '" alt="foto label" style="max-width:340px;width:100%;border-radius:14px;border:1px solid #E2EDF8">';
+  kabarProses("");
+  let hasil;
+  try {
+    hasil = await bacaLabel(blob);
+  } catch (e) {
+    hasil = { nama_produk: null, takaran_saji: null, sajian_per_kemasan: 1, gula: null, natrium: null,
+      lemak: null, _baris: [], _sumber: "gagal", _ocr_error: e.message || String(e) };
+  }
+  hasilScan = hasil; sudahDitambah = false;
+  $("#scanProses").hidden = true;
+  tampilkanKonfirmasi(hasil);
+}
+function tampilkanKonfirmasi(scan) {
+  $("#scanKonfirmasi").hidden = false;
+  const sumber = String(scan._sumber || "");
+  if (sumber.indexOf("gemini") === 0) {
+    $("#konfirmasiSumber").innerHTML = '<div class="kartu-info">🤖 Dibaca dengan <b>AI Vision Gemini</b> (' +
+      esc(sumber.split(":")[1] || "") + ").</div>";
+  } else if (sumber === "ocr") {
+    let t = '<div class="kartu-info">🤖 Dibaca dengan <b>OCR di HP</b> (Tesseract, gratis).</div>';
+    if (scan._gemini_error) t += '<div class="kartu-warning">Catatan AI Vision: ' + esc(scan._gemini_error) + "</div>";
+    $("#konfirmasiSumber").innerHTML = t;
+  } else {
+    $("#konfirmasiSumber").innerHTML = '<div class="kartu-warning">🤖 Pembaca label bermasalah — ' +
+      esc(scan._gemini_error || scan._ocr_error || "-") + "<br>Isi manual sesuai label kemasan ya.</div>";
+  }
+  const baris = scan._baris || [];
+  $("#konfirmasiTeks").innerHTML = baris.length
+    ? '<details class="editor"><summary>📄 Teks mentah yang terbaca mesin</summary><div class="mono">' +
+      esc(baris.join("\n")) + "</div></details>"
+    : "";
+  const amb = (k, d) => (scan[k] === null || scan[k] === undefined || scan[k] === "") ? d : scan[k];
+  $("#inpNama").value = scan.nama_produk || "";
+  $("#inpTakaran").value = String(amb("takaran_saji", "") || "");
+  $("#inpGula").value = amb("gula", 0);
+  $("#inpNatrium").value = amb("natrium", 0);
+  $("#inpLemak").value = amb("lemak", 0);
+  $("#inpSajianKemasan").value = amb("sajian_per_kemasan", 1);
+  $("#inpJumlah").value = 1;
+  $("#btnTambah").disabled = false;
+  $("#btnTambah").textContent = "➕ Tambahkan ke GGL Hari Ini";
+  renderAnalisisScan();
+}
+function bacaFormScan() {
+  const num = id => {
+    const v = parseFloat(String($(id).value).replace(",", "."));
+    return isNaN(v) ? 0 : v;
+  };
+  return {
+    gula: num("#inpGula"), natrium: num("#inpNatrium"), lemak: num("#inpLemak"),
+    jumlah: Math.max(num("#inpJumlah"), 0.25),
+    sajianKemasan: Math.max(parseInt($("#inpSajianKemasan").value, 10) || 1, 1),
+    nama: $("#inpNama").value.trim(), takaran: $("#inpTakaran").value.trim()
+  };
+}
+function renderAnalisisScan() {
+  const f = bacaFormScan();
+  const meta = { gula: GZ.NUTRIENTS[0], natrium: GZ.NUTRIENTS[1], lemak: GZ.NUTRIENTS[2] };
+  const lim = GZ.limits(), amb = GZ.thresholds();
+  const perSajian = {}, perKemasan = {};
+  GZ.NUTRIENTS.forEach(function (m) {
+    const nilai = f[m.key];
+    perSajian[m.key] = GZ.statNutrisi(nilai, lim[m.limitKey], amb, 1);
+    perKemasan[m.key] = GZ.statNutrisi(nilai, lim[m.limitKey], amb, f.sajianKemasan);
+  });
+  $("#kartuPerSajian").innerHTML = GZ.NUTRIENTS.map(m => kartuNutrisi(m, perSajian[m.key])).join("");
+  $("#kartuPerKemasan").innerHTML = GZ.NUTRIENTS.map(m => kartuNutrisi(m, perKemasan[m.key])).join("");
+  $("#judulPerKemasan").textContent = "B. JIKA 1 KEMASAN (" + f.sajianKemasan + " SAJIAN) DIKONSUMSI SELURUHNYA";
+
+  // dampak
+  const dikonsumsi = GZ.nilaiDikonsumsi(f, f.jumlah);
+  const dampak = GZ.dampakPenambahan(GZ.totalsFor(GZ.todayISO()), dikonsumsi, amb, lim);
+  $("#judulDampak").textContent = "C. DAMPAK KE TOTAL HARI INI (kalau " + GZ.fmtJumlah(f.jumlah) + " sajian dimakan)";
+  $("#blokDampak").innerHTML = GZ.NUTRIENTS.map(function (m) {
+    const d = dampak[m.key];
+    return '<div style="margin:6px 0">' + m.emoji + " <b>" + m.jenis + ":</b> " +
+      GZ.fmtJumlah(d.sekarang) + " → <b>" + GZ.fmtJumlah(d.prediksi) + " " + m.unit + "</b> · " +
+      GZ.fmtPersen(d.persen_sekarang) + "% → <b>" + GZ.fmtPersen(d.persen_prediksi) + "%</b>" + "</div>";
+  }).join("");
+
+  // peringatan
+  let html = "";
+  const adaMerah = GZ.NUTRIENTS.some(m => perSajian[m.key].warna === "merah");
+  const lewat = GZ.NUTRIENTS.map(m => ({ m: m, d: dampak[m.key] })).filter(x => x.d.warna_prediksi === "merah");
+  if (adaMerah) {
+    html += '<div class="banner-danger"><b>⚠️ PERINGATAN</b><p>Kandungan salah satu zat gizi pada produk ini ' +
+      "telah mencapai atau melebihi batas konsumsi harian (per 1 sajian). Perhatikan konsumsi makanan dan " +
+      "minuman lain sepanjang hari.</p></div>";
+  }
+  if (lewat.length) {
+    const rincian = lewat.map(x => x.m.emoji + " " + GZ.fmtJumlah(x.d.prediksi) + "/" +
+      GZ.fmtJumlah(x.d.batas) + " " + x.m.unit + " (" + GZ.fmtPersen(x.d.persen_prediksi) + "%)").join("; ");
+    html += '<div class="banner-danger"><b>⚠️ PERHATIAN</b><p>Jika produk ini ditambahkan, total konsumsi harian ' +
+      "akan melebihi batas: " + rincian + ". Tetap boleh dicatat — GiziLens hanya mengingatkan, tidak melarang. " +
+      "😊</p></div>";
+  } else if (!adaMerah) {
+    html += '<div class="banner-danger banner-ok"><b>🟢 AMAN</b><p>Per 1 sajian, produk ini masih di bawah 50% ' +
+      "batas harian untuk gula, garam, dan lemak. Tetap perhatikan porsi ya.</p></div>";
+  }
+  $("#warnDampak").innerHTML = html;
+}
+function resetScan() {
+  hasilScan = null; sudahDitambah = false;
+  $("#scanKonfirmasi").hidden = true;
+  $("#scanProses").hidden = true;
+  $("#scanKamera").hidden = false;
+  $("#fileFoto").value = "";
+  mulaiKamera();
+}
+
+/* ---------- GGL HARI INI ---------- */
+function renderHariIni() {
+  const r = GZ.ringkasanTanggal();
+  const g = r.ringkasan.gula, n = r.ringkasan.natrium, l = r.ringkasan.lemak;
+  $("#hariiniTanggal").textContent = GZ.tanggalID(r.tanggal);
+  $("#hariiniCards").innerHTML =
+    kartuTotal("🍬", "GULA", g, "g") +
+    kartuTotal("🧂", "GARAM / NATRIUM", n, "mg", ["≈ " + GZ.fmtJumlah(n.garam_g) + " / " + GZ.fmtJumlah(n.garam_batas_g) + " g garam"]) +
+    kartuTotal("🥑", "LEMAK TOTAL", l, "g");
+  const b = GZ.BADGE[r.status_keseluruhan];
+  $("#hariiniStatus").innerHTML = "Status konsumsi hari ini: " + b[0] + " · " + b[1];
+
+  $("#hariiniSisa").innerHTML = GZ.NUTRIENTS.map(function (m) {
+    const rr = r.ringkasan[m.key];
+    if (rr.lebih > 0) {
+      return "• " + m.emoji + " <b>" + m.jenis + "</b>: 🔴 sudah <b>melebihi batas " +
+        GZ.fmtJumlah(rr.lebih) + " " + m.unit + "</b> (konsumsi " + GZ.fmtJumlah(rr.konsumsi) + " / " +
+        GZ.fmtJumlah(rr.batas) + " " + m.unit + ")";
+    }
+    return "• " + m.emoji + " <b>" + m.jenis + "</b>: <b>" + GZ.fmtJumlah(rr.sisa) + " " + m.unit +
+      "</b> tersisa (batas " + GZ.fmtJumlah(rr.batas) + " " + m.unit + ")";
+  }).join("<br>");
+
+  $("#hariiniKontributor").innerHTML = GZ.NUTRIENTS.map(function (m) {
+    const kt = GZ.kontributorTertinggi(r.baris, m.db);
+    if (kt && kt.nilai > 0) {
+      return '<div class="kartu-ggl"><div class="head">' + m.emoji + " " + m.jenis + " tertinggi</div>" +
+        '<div class="nilai" style="font-size:16px">' + esc(kt.nama) + "</div>" +
+        '<div class="pct" style="font-weight:700">' + GZ.fmtJumlah(kt.nilai) + " " + m.unit + "</div>" +
+        '<div class="pct">pukul ' + esc(kt.waktu) + "</div></div>";
+    }
+    return '<div class="kartu-ggl"><div class="head">' + m.emoji + " " + m.jenis + '</div><div class="nilai">—</div></div>';
+  }).join("");
+
+  $("#tabelHariIni").innerHTML = tabelEditor(r.baris);
+  $("#totalHariIni").innerHTML = r.baris.length
+    ? "TOTAL HARI INI — Gula: <b>" + GZ.fmtJumlah(g.konsumsi) + " g</b> · Natrium: <b>" +
+      GZ.fmtJumlah(n.konsumsi) + " mg</b> · Lemak: <b>" + GZ.fmtJumlah(l.konsumsi) + " g</b>"
+    : "";
+}
+function tabelEditor(baris) {
+  if (!baris.length) return '<div class="kartu-info">Belum ada produk tercatat pada tanggal ini.</div>';
+  let html = '<div class="table-scroll"><table class="data"><thead><tr><th>Waktu</th><th>Produk</th>' +
+    "<th>Jumlah</th><th>Gula (g)</th><th>Natrium (mg)</th><th>Lemak (g)</th></tr></thead><tbody>";
+  baris.forEach(function (b) {
+    html += "<tr><td>" + esc(b.time) + "</td><td>" + esc(b.product_name) + "</td><td>" +
+      GZ.fmtJumlah(b.consumed_servings) + " sajian</td><td>" + GZ.fmtJumlah(b.sugar_g) + "</td><td>" +
+      GZ.fmtJumlah(b.sodium_mg) + "</td><td>" + GZ.fmtJumlah(b.fat_g) + "</td></tr>";
+  });
+  html += "</tbody></table></div>";
+  baris.forEach(function (b) {
+    html += '<details class="editor"><summary>✏️ ' + esc(b.product_name) + " — " + esc(b.time) + " (" +
+      GZ.fmtJumlah(b.consumed_servings) + ' sajian)</summary>' +
+      '<div class="row2"><div class="field"><label>Nama produk</label>' +
+      '<input type="text" data-en="' + b.id + '" value="' + attr(b.product_name) + '"></div>' +
+      '<div class="field"><label>Jumlah sajian dikonsumsi</label>' +
+      '<input type="number" min="0.25" max="60" step="0.5" data-es="' + b.id + '" value="' + b.consumed_servings + '"></div></div>' +
+      '<div class="kecil">Nilai gula/natrium/lemak ikut dihitung ulang otomatis (proporsional dari kandungan per sajian).</div>' +
+      '<div class="row2" style="margin-top:8px">' +
+      '<button class="btn btn-sm btn-primary" data-sv="' + b.id + '">💾 Simpan</button>' +
+      '<button class="btn btn-sm btn-danger" data-del="' + b.id + '">🗑️ Hapus</button></div></details>';
+  });
+  return html;
+}
+function simpanEdit(id) {
+  const namaEl = document.querySelector('[data-en="' + id + '"]');
+  const srvEl = document.querySelector('[data-es="' + id + '"]');
+  const srv = srvEl ? parseFloat(String(srvEl.value).replace(",", ".")) : NaN;
+  GZ.ubahCatatan(id, {
+    product_name: namaEl ? namaEl.value.trim() : undefined,
+    consumed_servings: (isNaN(srv) || srv <= 0) ? undefined : srv
+  });
+  toast("Tersimpan ✅");
+  renderUlang();
+}
+function hapusBaris(id) {
+  GZ.hapusCatatan(id);
+  toast("Dihapus 🗑️");
+  renderUlang();
+}
+function renderUlang() {
+  renderBeranda();
+  renderHariIni();
+  renderMingguan();
+  renderRiwayat();
+  renderPengaturan();
+}
+
+/* ---------- RIWAYAT ---------- */
+let tanggalRiwayat = GZ.todayISO();
+function renderRiwayat() {
+  if (tanggalRiwayat > GZ.todayISO()) tanggalRiwayat = GZ.todayISO();
+  $("#inpRiwayatTanggal").value = tanggalRiwayat;
+  $("#inpRiwayatTanggal").max = GZ.todayISO();
+  $("#btnHariBerikut").disabled = tanggalRiwayat >= GZ.todayISO();
+  const r = GZ.ringkasanTanggal(tanggalRiwayat);
+  const g = r.ringkasan.gula, n = r.ringkasan.natrium, l = r.ringkasan.lemak;
+  $("#riwayatJudul").textContent = GZ.tanggalID(tanggalRiwayat);
+  $("#riwayatMetrik").innerHTML =
+    '<div class="metric"><div class="m-label">🍬 Gula</div><div class="m-val">' + GZ.fmtJumlah(g.konsumsi) +
+      " / " + GZ.fmtJumlah(g.batas) + ' g</div><div class="m-sub">' + GZ.fmtPersen(g.persen) + "% · sisa " +
+      GZ.fmtJumlah(g.sisa) + " g</div></div>" +
+    '<div class="metric"><div class="m-label">🧂 Natrium</div><div class="m-val">' + GZ.fmtJumlah(n.konsumsi) +
+      " / " + GZ.fmtJumlah(n.batas) + ' mg</div><div class="m-sub">' + GZ.fmtPersen(n.persen) + "% · sisa " +
+      GZ.fmtJumlah(n.sisa) + " mg</div></div>" +
+    '<div class="metric"><div class="m-label">🥑 Lemak</div><div class="m-val">' + GZ.fmtJumlah(l.konsumsi) +
+      " / " + GZ.fmtJumlah(l.batas) + ' g</div><div class="m-sub">' + GZ.fmtPersen(l.persen) + "% · sisa " +
+      GZ.fmtJumlah(l.sisa) + " g</div></div>";
+  $("#tabelRiwayat").innerHTML = tabelEditor(r.baris);
+}
+
+/* ---------- RINGKASAN 7 HARI ---------- */
+function renderMingguan() {
+  const m = GZ.ringkasan7Hari();
+  const SKALA = 150;   // tinggi grafik = 150% batas
+  const refAtas = (1 - 100 / SKALA) * 100;
+  $("#chartGrid").innerHTML = '<div class="ref" style="top:' + refAtas.toFixed(1) + '%">batas 100%</div>' +
+    m.hari.map(function (h) {
+      const kol = [["sugar_persen", GZ.COLORS.hijau], ["sodium_persen", GZ.COLORS.kuning], ["fat_persen", GZ.COLORS.merah]]
+        .map(function (p) {
+          const tinggi = Math.max(2, Math.min(100, (h[p[0]] / SKALA) * 100));
+          return '<i style="height:' + tinggi.toFixed(1) + "%;background:" + p[1] + '" title="' +
+            GZ.fmtPersen(h[p[0]]) + '%"></i>';
+        }).join("");
+      return '<div class="col" title="' + h.label + '">' + kol + "</div>";
+    }).join("");
+  $("#chartLabel").innerHTML = m.hari.map(h => "<div>" + h.hari_nama + "<br>" + h.label + "</div>").join("");
+  const akhir = m.hari[m.hari.length - 1];
+  $("#mingguanAngka").innerHTML =
+    '<div class="metric"><div class="m-label">🍬 Gula</div><div class="m-val">' + m.lewat.sugar_g +
+      ' dari 7 hari</div><div class="m-sub">Hari ini: ' + GZ.fmtPersen(akhir.sugar_persen) + "%</div></div>" +
+    '<div class="metric"><div class="m-label">🧂 Natrium</div><div class="m-val">' + m.lewat.sodium_mg +
+      ' dari 7 hari</div><div class="m-sub">Hari ini: ' + GZ.fmtPersen(akhir.sodium_persen) + "%</div></div>" +
+    '<div class="metric"><div class="m-label">🥑 Lemak</div><div class="m-val">' + m.lewat.fat_g +
+      ' dari 7 hari</div><div class="m-sub">Hari ini: ' + GZ.fmtPersen(akhir.fat_persen) + "%</div></div>";
+  const tanda = p => p >= 100 ? "🔴" : (p >= 50 ? "🟡" : "🟢");
+  $("#mingguanRincian").innerHTML = m.hari.map(function (h) {
+    return "• <b>" + h.hari_nama + " (" + h.label + ")</b> — Gula " + tanda(h.sugar_persen) + " " +
+      GZ.fmtPersen(h.sugar_persen) + "% · Natrium " + tanda(h.sodium_persen) + " " +
+      GZ.fmtPersen(h.sodium_persen) + "% · Lemak " + tanda(h.fat_persen) + " " + GZ.fmtPersen(h.fat_persen) + "%";
+  }).join("<br>");
+}
+
+/* ---------- PENGATURAN ---------- */
+function renderPengaturan() {
+  const lim = GZ.limits(), amb = GZ.thresholds();
+  $("#setGula").value = lim.sugar_g; $("#setNatrium").value = lim.sodium_mg; $("#setLemak").value = lim.fat_g;
+  $("#setKuning").value = amb.warning; $("#setMerah").value = amb.danger;
+  $("#setGemini").value = GZ.state.settings.geminiKey || "";
+  $("#setTesseract").checked = !!GZ.state.settings.tesseract;
+  const n = GZ.state.entries.length;
+  let ukuran = "0 KB";
+  try { ukuran = Math.round((localStorage.getItem(GZ.STORE_KEY) || "").length / 1024) + " KB"; } catch (e) {}
+  $("#infoData").textContent = n + " catatan tersimpan di perangkat ini (" + ukuran +
+    "). Backup disarankan sebelum berganti HP / membersihkan browser.";
+}
+
+/* ---------- unduh berkas ---------- */
+function unduh(nama, isi, mime) {
+  const blob = new Blob([isi], { type: mime || "text/plain;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = nama; document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 400);
+}
+
+/* ---------- pemasangan kejadian ---------- */
+function pasangKejadian() {
+  $("#btnMenu").addEventListener("click", () => $("#sidebar").classList.toggle("open"));
+  $$(".nav-item").forEach(b => b.addEventListener("click", () => bukaHalaman(b.dataset.page)));
+  $$("[data-goto]").forEach(b => b.addEventListener("click", () => bukaHalaman(b.dataset.goto)));
+  $("#btnAmbil").addEventListener("click", ambilFoto);
+  $("#btnGantiKamera").addEventListener("click", async () => {
+    camFacing = (camFacing === "environment") ? "user" : "environment";
+    toast(camFacing === "user" ? "Kamera depan 📸" : "Kamera belakang 📸");
+    await mulaiKamera();
+  });
+  $("#fileFoto").addEventListener("change", function () {
+    if (this.files && this.files[0]) prosesFoto(this.files[0]);
+  });
+  ["#inpGula", "#inpNatrium", "#inpLemak", "#inpSajianKemasan", "#inpJumlah"]
+    .forEach(s => $(s).addEventListener("input", renderAnalisisScan));
+
+  $("#btnTambah").addEventListener("click", function () {
+    if (sudahDitambah) { toast("Produk ini sudah ditambahkan."); return; }
+    const f = bacaFormScan();
+    if (!f.gula && !f.natrium && !f.lemak) { toast("Isi dulu angka gula/natrium/lemak hasil pembacaan label."); return; }
+    GZ.tambahCatatan(f.nama || "Produk (tanpa nama)", f.takaran, f.jumlah,
+      { gula: f.gula, natrium: f.natrium, lemak: f.lemak });
+    sudahDitambah = true;
+    this.disabled = true;
+    this.textContent = "✅ Tersimpan di GGL Hari Ini";
+    renderUlang();
+    toast("Berhasil ditambahkan ke catatan GGL hari ini ✅");
+  });
+  $("#btnScanLagi").addEventListener("click", resetScan);
+
+  $("#btnHariSebelum").addEventListener("click", () => { tanggalRiwayat = GZ.geserHari(tanggalRiwayat, -1); renderRiwayat(); });
+  $("#btnHariBerikut").addEventListener("click", () => { tanggalRiwayat = GZ.geserHari(tanggalRiwayat, 1); renderRiwayat(); });
+  $("#inpRiwayatTanggal").addEventListener("change", function () { if (this.value) { tanggalRiwayat = this.value; renderRiwayat(); } });
+  $("#btnCsv").addEventListener("click", () => unduh("gizilens_riwayat_" + GZ.todayISO() + ".csv", GZ.csvSemua(), "text/csv;charset=utf-8"));
+  $("#btnJson").addEventListener("click", () => unduh("gizilens_backup_" + GZ.todayISO() + ".json",
+    JSON.stringify({ entries: GZ.state.entries, settings: GZ.state.settings }, null, 1), "application/json"));
+
+  // editor tabel (delegasi)
+  document.addEventListener("click", function (ev) {
+    const sv = ev.target.closest("[data-sv]"), del = ev.target.closest("[data-del]");
+    if (sv) simpanEdit(sv.dataset.sv);
+    if (del) {
+      if (confirm("Hapus catatan ini dari riwayat?")) hapusBaris(del.dataset.del);
+    }
+  });
+
+  // pengaturan
+  $("#btnSimpanSet").addEventListener("click", function () {
+    const b = (id, d) => { const v = parseFloat($(id).value); return (isNaN(v) || v <= 0) ? d : v; };
+    GZ.state.settings.limits = { sugar_g: b("#setGula", 50), sodium_mg: b("#setNatrium", 2000), fat_g: b("#setLemak", 67) };
+    const kuning = b("#setKuning", 50), merah = b("#setMerah", 100);
+    GZ.state.settings.thresholds = { warning: kuning, danger: Math.max(merah, kuning + 1) };
+    GZ.save(); renderUlang(); toast("Pengaturan disimpan ✅");
+  });
+  $("#btnResetSet").addEventListener("click", function () {
+    GZ.state.settings.limits = Object.assign({}, GZ.DEFAULT_LIMITS);
+    GZ.state.settings.thresholds = Object.assign({}, GZ.DEFAULT_THRESHOLDS);
+    GZ.save(); renderPengaturan(); renderUlang(); toast("Kembali ke nilai baku ↩️");
+  });
+  $("#btnSimpanKey").addEventListener("click", function () {
+    GZ.state.settings.geminiKey = $("#setGemini").value.trim();
+    GZ.save();
+    toast(GZ.state.settings.geminiKey ? "Kunci AI disimpan di perangkat ini ✅" : "Kunci dikosongkan.");
+  });
+  $("#btnHapusKey").addEventListener("click", function () {
+    GZ.state.settings.geminiKey = ""; $("#setGemini").value = ""; GZ.save();
+    toast("Kunci AI dihapus 🗑️");
+  });
+  $("#setTesseract").addEventListener("change", function () {
+    GZ.state.settings.tesseract = this.checked; GZ.save();
+    toast(this.checked ? "OCR di HP: aktif" : "OCR di HP: nonaktif");
+  });
+  $("#btnBackup").addEventListener("click", () => unduh("gizilens_backup_" + GZ.todayISO() + ".json",
+    JSON.stringify({ entries: GZ.state.entries, settings: GZ.state.settings }, null, 1), "application/json"));
+  $("#btnRestore").addEventListener("click", () => $("#fileRestore").click());
+  $("#fileRestore").addEventListener("change", function () {
+    const f = this.files && this.files[0];
+    if (!f) return;
+    const fr = new FileReader();
+    fr.onload = function () {
+      try {
+        const d = JSON.parse(String(fr.result));
+        if (!d || !Array.isArray(d.entries)) throw new Error("format tidak dikenali");
+        if (!confirm("Ganti semua catatan di perangkat ini dengan isi backup (" + d.entries.length + " catatan)?")) return;
+        GZ.state.entries = d.entries;
+        if (d.settings) {
+          GZ.state.settings.limits = Object.assign({}, GZ.DEFAULT_LIMITS, d.settings.limits || {});
+          GZ.state.settings.thresholds = Object.assign({}, GZ.DEFAULT_THRESHOLDS, d.settings.thresholds || {});
+          GZ.state.settings.geminiKey = (d.settings.geminiKey || "");
+          GZ.state.settings.tesseract = (d.settings.tesseract !== false);
+        }
+        GZ._nextId = GZ.state.entries.reduce((m, e) => Math.max(m, Number(e.id) || 0), 0) + 1;
+        GZ.save(); renderUlang(); toast("Backup dipulihkan ✅");
+      } catch (e) { toast("Gagal memulihkan: " + (e.message || e)); }
+    };
+    fr.readAsText(f);
+  });
+  $("#btnHapusData").addEventListener("click", function () {
+    if (!confirm("Hapus SEMUA catatan GGL di perangkat ini? Tindakan ini tidak bisa dibatalkan.")) return;
+    GZ.state.entries = []; GZ._nextId = 1; GZ.save(); renderUlang();
+    toast("Semua catatan dihapus 🗑️");
+  });
+}
+
+/* ---------- jalan ---------- */
+GZ.load();
+$("#topDate").textContent = GZ.tanggalID(GZ.todayISO());
+$("#sidebarFoot").innerHTML = "Catatan tersimpan di perangkat ini (offline).<br>📅 " + GZ.tanggalID(GZ.todayISO());
+pasangKejadian();
+renderBeranda(); renderHariIni(); renderRiwayat(); renderMingguan(); renderPengaturan();
+tanggalRiwayat = GZ.todayISO();
+if ("serviceWorker" in navigator && location.protocol.indexOf("http") === 0) {
+  navigator.serviceWorker.register("sw.js").catch(() => {});
+}
+
+</script>
+</body>
+</html>
