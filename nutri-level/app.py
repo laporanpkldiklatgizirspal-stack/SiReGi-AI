@@ -18,6 +18,8 @@ import streamlit as st
 
 import config
 import database as db
+import nutri_level as nl
+import pengaturan as setel
 import nutrition_tracker as tracker
 import nutrition_ui as ui
 from nutrition_calculator import badge, dampak_penambahan, nilai_dikonsumsi, ringkas_garam, ringkas_zat
@@ -33,15 +35,16 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded",
 )
-st.markdown(ui.css(), unsafe_allow_html=True)
+st.markdown(ui.css() + ui.css_nutri_level(), unsafe_allow_html=True)
 
 NAV = [
     "🏠 Beranda",
     "📷 Scan Produk",
     "📊 GGL Hari Ini",
     "📅 Riwayat",
-    "📈 Ringkasan 7 Hari",
+    "📈 Ringkasan",
     "📖 Edukasi",
+    "⚙️ Pengaturan",
     "ℹ️ Tentang",
 ]
 
@@ -85,6 +88,87 @@ def _kartu_3(html_list: list[str]):
     kolom = st.columns(len(html_list))
     for k, h in zip(kolom, html_list):
         k.markdown(h, unsafe_allow_html=True)
+
+
+# ===========================================================================
+# ⚙️ PENGATURAN
+# ===========================================================================
+def halaman_pengaturan():
+    ui.judul_seksi("⚙️ Pengaturan", "Isi ambang Nutri-Level & lihat batas harian yang dipakai.")
+    d = setel.muat()
+
+    st.markdown("#### 🍽️ Batas konsumsi harian (GGL)")
+    st.markdown(
+        f"- 🍬 **Gula {fmt_jumlah(config.DAILY_LIMITS['sugar_g'])} g** per hari (± 4 sendok makan)\n"
+        f"- 🧂 **Natrium {fmt_jumlah(config.DAILY_LIMITS['sodium_mg'])} mg** per hari "
+        "(± 1 sendok teh garam / 5 g)\n"
+        f"- 🥑 **Lemak {fmt_jumlah(config.DAILY_LIMITS['fat_g'])} g** per hari (± 5 sendok makan)\n"
+        "- Ambang warna: 🟢 < 50% · 🟡 50–99% · 🔴 ≥ 100% dari batas harian."
+    )
+    st.caption("Dasar: Permenkes RI No. 30 Tahun 2013 & rekomendasi WHO. Angka ini dipakai untuk "
+               "'Cek Kebutuhan Harianku' di halaman Scan.")
+
+    st.markdown("---")
+    st.markdown("#### 🏷️ Ambang Nutri-Level (label depan kemasan Kemenkes)")
+    st.caption("Format: batas **A** · batas **B** · batas **C**. Contoh: A ≤ batas A, B ≤ batas B, "
+               "C ≤ batas C, D lebih dari batas C.")
+
+    def _baris_ambang(prefix: str, label: str, nilai: list, maks: float, step: float, bantuan: str = "") -> list:
+        kol = st.columns([2.4, 1, 1, 1])
+        kol[0].markdown(f"**{label}**")
+        a = kol[1].number_input("A ≤", 0.0, maks, float(nilai[0]), step, key=f"{prefix}_a", help=bantuan)
+        b = kol[2].number_input("B ≤", 0.0, maks, float(nilai[1]), step, key=f"{prefix}_b")
+        c = kol[3].number_input("C ≤", 0.0, maks, float(nilai[2]), step, key=f"{prefix}_c")
+        return [a, b, c]
+
+    st.markdown("**🥤 Minuman (per 100 mL)** — sesuai poster Kemenkes")
+    minum = {
+        "gula": _baris_ambang("nlmin_gula", "🍬 Gula (g/100 mL)",
+                              d["ambang_minuman"].get("gula", [1.0, 5.0, 10.0]), 100.0, 0.5),
+        "natrium": _baris_ambang("nlmin_na", "🧂 Garam/natrium (mg/100 mL)",
+                                 d["ambang_minuman"].get("natrium", [5.0, 120.0, 500.0]), 5000.0, 5.0),
+        "lemak_jenuh": _baris_ambang("nlmin_lj", "🥑 Lemak jenuh (g/100 mL)",
+                                     d["ambang_minuman"].get("lemak_jenuh", [0.7, 1.2, 2.8]), 50.0, 0.1),
+    }
+
+    st.markdown("**🍪 Makanan (per 100 g)** — isi sesuai poster/aturan resmi")
+    if not d["ambang_makanan"]:
+        st.info("⚠️ Masih kosong — artinya aplikasi belum bisa memberi huruf Nutri-Level untuk produk "
+                "makanan (biskuit, mie, snack, dll). Isi angkanya di bawah sesuai poster Kemenkes versi "
+                "makanan, lalu tekan **Simpan**.")
+    mkanan = {
+        "gula": _baris_ambang("nlmkn_gula", "🍬 Gula (g/100 g)",
+                              d["ambang_makanan"].get("gula", [0.0, 0.0, 0.0]), 100.0, 0.5),
+        "natrium": _baris_ambang("nlmkn_na", "🧂 Garam/natrium (mg/100 g)",
+                                 d["ambang_makanan"].get("natrium", [0.0, 0.0, 0.0]), 5000.0, 5.0),
+        "lemak_jenuh": _baris_ambang("nlmkn_lj", "🥑 Lemak jenuh (g/100 g)",
+                                     d["ambang_makanan"].get("lemak_jenuh", [0.0, 0.0, 0.0]), 50.0, 0.1),
+    }
+    sumber_makanan = st.text_input("Catatan sumber angka makanan (opsional)",
+                                   value=d.get("batas_nutri_level_makanan_sumber", ""),
+                                   placeholder="contoh: poster Kemenkes versi makanan, per 100 g",
+                                   key="nl_sumber_makanan")
+
+    s1, s2 = st.columns([1, 1])
+    if s1.button("💾 Simpan pengaturan", type="primary", use_container_width=True):
+        baru = setel.muat()
+        baru["ambang_minuman"] = {k: v for k, v in minum.items() if v[2] > 0}
+        baru["ambang_makanan"] = {k: v for k, v in mkanan.items() if v[2] > 0}
+        baru["batas_nutri_level_makanan_sumber"] = sumber_makanan.strip()
+        if setel.simpan(baru):
+            st.success("Tersimpan ✅ — ambang Nutri-Level diperbarui.")
+        else:
+            st.error("Gagal menyimpan (folder aplikasi tidak bisa ditulis di server ini).")
+        st.rerun()
+    if s2.button("↩️ Kembalikan ke bawaan", use_container_width=True):
+        setel.simpan(dict(setel.BAWAAN))
+        st.success("Kembali ke pengaturan bawaan ↩️")
+        st.rerun()
+
+    if setel.lokasi_temp():
+        st.caption("⚠️ Pengaturan disimpan di folder sementara server (folder aplikasi read-only).")
+    st.caption(f"Sumber: {config.NUTRI_LEVEL_SUMBER}. Bila poster resmi memuat angka berbeda, "
+               "angka di halaman ini yang dipakai aplikasi.")
 
 
 # ===========================================================================
@@ -260,9 +344,24 @@ def halaman_scan():
                               float(ambil("natrium", 0.0)), 1.0, format="%g", key="inp_natrium")
     lemak = g3.number_input("Lemak Total (gram) per sajian", 0.0, 2000.0,
                             float(ambil("lemak", 0.0)), 0.1, format="%g", key="inp_lemak")
+    j1, j2 = st.columns(2)
+    lemak_jenuh = j1.number_input("Lemak jenuh (gram) per sajian", 0.0, 2000.0,
+                                  float(ambil("lemak_jenuh", 0.0)), 0.1, format="%g",
+                                  key="inp_lemak_jenuh",
+                                  help="Dipakai untuk Nutri-Level (Kemenkes). Di label biasanya tertulis "
+                                       "'Lemak Jenuh' / 'Saturated Fat'.")
+    isi_default = float(scan.get("isi_sajian") or nl.baca_isi_sajian(takaran) or 0.0)
+    isi_sajian = j2.number_input("Isi 1 sajian (mL untuk minuman / gram untuk makanan)",
+                                 0.0, 5000.0, isi_default, 1.0, format="%g",
+                                 key="inp_isi_sajian",
+                                 help="Diambil dari takaran saji, mis. 250 mL atau 12 g. Dipakai untuk "
+                                      "mengubah nilai per sajian menjadi nilai per 100 (Nutri-Level).")
     sajian_kemasan = st.number_input("Jumlah sajian per kemasan", 1, 60,
                                      int(ambil("sajian_per_kemasan", 1)), 1,
                                      key="inp_sajian_kemasan")
+
+    per_sajian = {"gula": gula, "natrium": natrium, "lemak": lemak,
+                  "lemak_jenuh": lemak_jenuh}
 
     st.markdown("---")
     st.markdown("#### 🍽️ Berapa sajian yang Anda konsumsi?")
@@ -270,35 +369,83 @@ def halaman_scan():
                              format="%g", key="inp_jumlah")
     st.caption("Contoh: 0.5 sajian = setengah, 1.5 = satu setengah, 2 = habis 2 sajian.")
 
-    per_sajian = {"gula": gula, "natrium": natrium, "lemak": lemak}
-    if not st.session_state.added_ok:
-        dampak = _blok_kandungan_produk(per_sajian, jumlah)
-    else:
-        st.success("✅ **Berhasil ditambahkan ke catatan GGL hari ini.** "
-                   "Data sudah tersimpan & dashboard diperbarui.")
+    # =======================================================================
+    # DUA CARA CEK: (1) peraturan Kemenkes (Nutri-Level)  (2) kebutuhan harian
+    # =======================================================================
+    jenis_awal = nl.tebak_jenis(takaran or scan.get("takaran_saji"))
+    tab_nl, tab_har = st.tabs(["🏷️ Cek Nutri-Level (Kemenkes)", "🍽️ Cek Kebutuhan Harianku (GGL)"])
 
-    st.markdown("---")
-    b1, b2 = st.columns([1, 1])
-    if not st.session_state.added_ok:
-        if b1.button("➕ Tambahkan ke GGL Hari Ini", type="primary",
-                     use_container_width=True):
-            nama_final = (nama or "").strip() or "Produk (tanpa nama)"
-            tracker.tambah_catatan(
-                nama_produk=nama_final,
-                takaran_saji=(takaran or "").strip(),
-                jumlah_sajian=jumlah,
-                per_sajian=per_sajian,
+    with tab_nl:
+        st.caption("Penilaian mengikuti aturan label depan kemasan: **per 100 mL** untuk minuman, "
+                   "**per 100 g** untuk makanan. Huruf akhir = level terburuk dari gula, garam, "
+                   "dan lemak jenuh.")
+        pilih_jenis = st.radio("Jenis produk", ["Minuman (per 100 mL)", "Makanan (per 100 g)"],
+                              index=0 if jenis_awal == "minuman" else 1,
+                              horizontal=True, key="inp_jenis_nl")
+        jenis_kode = "minuman" if pilih_jenis.startswith("Minuman") else "makanan"
+        ambang = setel.ambang_aktif(jenis_kode) or None
+        hasil_nl = nl.analisis_nutri_level(
+            gula, natrium, lemak_jenuh, isi_sajian=isi_sajian, jenis=jenis_kode,
+            ambang=ambang, per100_langsung=(scan.get("_per100") or None))
+        st.markdown(ui.kartu_nutri_level(hasil_nl, jenis_kode), unsafe_allow_html=True)
+        if not isi_sajian:
+            st.warning("⚠️ Isi 1 sajian belum terisi — nilai per 100 mL/g tidak bisa dihitung tepat. "
+                       "Isi kolom **Isi 1 sajian** di atas (mis. 250 untuk 250 mL, 12 untuk 12 g).")
+        with st.expander("📐 Cara menghitung & ambang batas yang dipakai"):
+            st.markdown(
+                f"- Nilai label (per sajian) diubah: **nilai ÷ isi 1 sajian × 100**.\n"
+                f"- Contoh: gula **{fmt_jumlah(gula)} g** per sajian, isi sajian "
+                f"**{fmt_jumlah(isi_sajian)}** → **{fmt_jumlah(hasil_nl['per100']['gula'])} g per 100 "
+                f"{'mL' if jenis_kode == 'minuman' else 'g'}**.\n"
+                "- Kalau label ikut mencetak kolom *per 100 g/mL*, angka kolom itulah yang dipakai."
             )
-            st.session_state.added_ok = True
+            if ambang:
+                nama_zat = {"gula": "🍬 Gula (g)", "natrium": "🧂 Garam/natrium (mg)",
+                            "lemak_jenuh": "🥑 Lemak jenuh (g)"}
+                st.table([{"Zat gizi": nama_zat.get(z, z),
+                           "A (rendah)": f"≤ {fmt_jumlah(v[0])}",
+                           "B": f"≤ {fmt_jumlah(v[1])}",
+                           "C": f"≤ {fmt_jumlah(v[2])}",
+                           "D (tinggi)": f"> {fmt_jumlah(v[2])}"}
+                          for z, v in ambang.items()])
+            if jenis_kode == "makanan" and not ambang:
+                st.info("Ambang **makanan (per 100 g)** belum diisi. Buka menu **⚙️ Pengaturan** "
+                        "untuk mengisinya sesuai poster/aturan resmi — setelah itu huruf Nutri-Level "
+                        "produk makanan dihitung otomatis.")
+        st.caption(f"Sumber: {config.NUTRI_LEVEL_SUMBER}. Ini alat bantu edukasi — acuan akhir tetap "
+                   "label resmi pada kemasan.")
+
+    with tab_har:
+        if not st.session_state.added_ok:
+            _blok_kandungan_produk(per_sajian, jumlah)
+        else:
+            st.success("✅ **Berhasil ditambahkan ke catatan GGL hari ini.** "
+                       "Data sudah tersimpan & dashboard diperbarui.")
+
+        st.markdown("---")
+        b1, b2 = st.columns([1, 1])
+        if not st.session_state.added_ok:
+            if b1.button("➕ Tambahkan ke GGL Hari Ini", type="primary",
+                         use_container_width=True):
+                nama_final = (nama or "").strip() or "Produk (tanpa nama)"
+                simpan = dict(per_sajian)
+                simpan["_level"] = hasil_nl.get("level")
+                tracker.tambah_catatan(
+                    nama_produk=nama_final,
+                    takaran_saji=(takaran or "").strip(),
+                    jumlah_sajian=jumlah,
+                    per_sajian=simpan,
+                )
+                st.session_state.added_ok = True
+                st.rerun()
+        else:
+            st.caption("Data tersimpan. Tekan tombol di bawah untuk scan produk lain.")
+        if b2.button("📷 Scan Produk Lain", use_container_width=True):
+            reset_scan()
             st.rerun()
-    else:
-        st.caption("Data tersimpan. Tekan tombol di bawah untuk scan produk lain.")
-    if b2.button("📷 Scan Produk Lain", use_container_width=True):
-        reset_scan()
-        st.rerun()
-    if b1 and not st.session_state.added_ok:
-        with b1:
-            st.caption("Produk baru masuk catatan hanya setelah tombol ini ditekan.")
+        if b1 and not st.session_state.added_ok:
+            with b1:
+                st.caption("Produk baru masuk catatan hanya setelah tombol ini ditekan.")
 
 
 # ===========================================================================
@@ -454,8 +601,36 @@ def halaman_riwayat():
 # 📈 RINGKASAN 7 HARI
 # ===========================================================================
 def halaman_ringkasan():
-    ui.judul_seksi("📈 Ringkasan 7 Hari", "Persentase konsumsi terhadap batas harian (7 hari terakhir).")
-    minggu = tracker.ringkasan_7_hari()
+    ui.judul_seksi("📈 Ringkasan GGL", "Lihat hari ini saja, atau tren beberapa hari terakhir.")
+    pilihan = st.radio("Rentang waktu", ["Hari ini", "7 hari terakhir", "30 hari terakhir"],
+                       index=0, horizontal=True, key="inp_rentang")
+    hari = 1 if pilihan.startswith("Hari ini") else (7 if pilihan.startswith("7") else 30)
+
+    if hari == 1:
+        r = tracker.ringkasan_tanggal()
+        g, n, l = r["ringkasan"]["gula"], r["ringkasan"]["natrium"], r["ringkasan"]["lemak"]
+        _kartu_3([
+            ui.kartu_total("🍬", "GULA", g["konsumsi"], g["batas"], "g", g),
+            ui.kartu_total("🧂", "GARAM / NATRIUM", n["konsumsi"], n["batas"], "mg", n,
+                           baris_tambahan=[f"≈ {fmt_jumlah(n['garam_g'])} g garam"]),
+            ui.kartu_total("🥑", "LEMAK TOTAL", l["konsumsi"], l["batas"], "g", l),
+        ])
+        badge_teks, pesan = badge(r["status_keseluruhan"])
+        st.markdown(f"#### Status hari ini: {badge_teks} · {pesan}")
+        if r["baris"]:
+            st.markdown("#### 🕒 Urutan konsumsi hari ini")
+            for b in r["baris"]:
+                lvl = f" · 🏷️ Nutri-Level {b.get('nutri_level')}" if dict(b).get("nutri_level") else ""
+                st.markdown(
+                    f"- **{b['time']}** · {b['product_name']} — {fmt_jumlah(b['consumed_servings'])} sajian · "
+                    f"gula {fmt_jumlah(b['sugar_g'])} g · natrium {fmt_jumlah(b['sodium_mg'])} mg · "
+                    f"lemak {fmt_jumlah(b['fat_g'])} g{lvl}")
+            st.caption("Tombol edit/hapus tiap produk ada di halaman 📊 GGL Hari Ini.")
+        else:
+            st.info("Belum ada produk tercatat hari ini. Scan produk dulu di menu 📷 Scan Produk.")
+        return
+
+    minggu = tracker.ringkasan_rentang(hari)
     df = pd.DataFrame([
         {"Hari": h["label"], "Gula %": round(h["sugar_persen"], 1),
          "Natrium %": round(h["sodium_persen"], 1), "Lemak %": round(h["fat_persen"], 1)}
@@ -471,7 +646,7 @@ def halaman_ringkasan():
     for kol, (kolom, kunci_persen, nama) in zip((k1, k2, k3), peta):
         lewat = minggu["lewat"][kolom]
         baris_terakhir = minggu["hari"][-1]
-        kol.markdown(f"**{nama}**  \nHari melebihi batas: **{lewat} dari 7 hari**  \n"
+        kol.markdown(f"**{nama}**  \nHari melebihi batas: **{lewat} dari {len(minggu['hari'])} hari**  \n"
                      f"Hari ini: **{fmt_persen(baris_terakhir[kunci_persen])}%**")
 
     with st.expander("📋 Rincian per hari"):
@@ -584,6 +759,8 @@ elif halaman.startswith("📈"):
     halaman_ringkasan()
 elif halaman.startswith("📖"):
     halaman_edukasi()
+elif halaman.startswith("⚙️"):
+    halaman_pengaturan()
 else:
     halaman_tentang()
 
