@@ -48,3 +48,14 @@ DB_SUM_COLUMNS = ("sugar_g", "sodium_mg", "fat_g")
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data"
 DB_FILENAME = "gizilens.db"
+# ---------- Nutri-Level (label depan kemasan, Kemenkes) ----------
+NUTRI_LEVEL_SUMBER = "Kepmenkes RI No. HK.01.07/MENKES/301/2026 (Nutri-Level)"
+NUTRI_LEVEL_KETERANGAN = {
+    "A": "RENDAH · lebih sehat — boleh dikonsumsi sehari-hari",
+    "B": "CUKUP RENDAH",
+    "C": "CUKUP TINGGI — konsumsi sesekali",
+    "D": "TINGGI · perlu dibatasi",
+}
+NUTRI_LEVEL_WARNA = {"A": "#16A34A", "B": "#84CC16", "C": "#F59E0B", "D": "#EF4444"}
+
+# Zat gizi utama yang dipantau (urutan tampilan)
