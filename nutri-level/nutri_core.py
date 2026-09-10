@@ -83,6 +83,16 @@ _FIELD_SPEC = {
         "hindari": re.compile(r"jenuh|saturated|trans|tidak\s+jenuh|mono|poly|omega|kolesterol|cholesterol", re.I),
         "satuan": "g",
     },
+    "lemak_jenuh": {
+        "pola": [
+            re.compile(r"lemak\s+jenuh", re.I),
+            re.compile(r"jenuh", re.I),
+            re.compile(r"saturated\s+fat", re.I),
+            re.compile(r"saturated", re.I),
+        ],
+        "hindari": re.compile(r"trans|tidak\s+jenuh|mono|poly|omega", re.I),
+        "satuan": "g",
+    },
     "protein": {
         "pola": [re.compile(r"\bprotein\b", re.I)],
         "hindari": None,
@@ -281,9 +291,10 @@ def parse_label_baris(baris_list):
         "gula": None,
         "natrium": None,
         "lemak": None,
+        "lemak_jenuh": None,
     }
 
-    for kunci in ("energi", "protein", "karbohidrat", "lemak", "gula", "natrium"):
+    for kunci in ("energi", "protein", "karbohidrat", "lemak", "lemak_jenuh", "gula", "natrium"):
         spec = _FIELD_SPEC[kunci]
         nilai, _baris = _cari_zat(bersih, spec, spec["satuan"])
         hasil[kunci] = nilai
@@ -449,19 +460,27 @@ Baca label pada foto, lalu jawab HANYA JSON valid tanpa teks lain:
 {
   "nama_produk": "nama produk atau null",
   "takaran_saji": "contoh: 250 ml / 1 bungkus (35 g) atau null",
+  "isi_saji_ml_atau_g": 250,
   "sajian_per_kemasan": 2,
   "energi_total_kkal": 180,
   "protein_g": 3,
   "karbohidrat_total_g": 12,
   "lemak_total_g": 4,
+  "lemak_jenuh_g": 1.5,
   "gula_g": 18,
-  "natrium_mg": 120
+  "natrium_mg": 120,
+  "per100_gula_g": null,
+  "per100_natrium_mg": null,
+  "per100_lemak_jenuh_g": null
 }
 Aturan:
 - Nilai sesuai TAKARAN SAJI yang tercetak (bukan per 100 g, kecuali label memang per 100 g).
+- "isi_saji_ml_atau_g" = isi satu sajian dalam mL (minuman) atau gram (makanan), diambil dari takaran saji.
 - Gula = Gula/Gula Total/Sugars/Total Sugars (JANGAN gula alkohol).
 - Natrium = Natrium/Garam (Natrium)/Sodium/Salt.
-- Lemak = Lemak Total/Total Fat (JANGAN lemak jenuh/trans).
+- Lemak total = Lemak Total/Total Fat (JANGAN lemak jenuh/trans).
+- Lemak jenuh = Lemak Jenuh/Saturated Fat (JANGAN lemak trans).
+- Kalau label IKUT mencetak kolom "per 100 g / per 100 mL", isi per100_* dengan angka kolom itu; kalau tidak ada, isi null.
 - Kalau satu angka tidak terbaca/ragu, isi null (bukan perkiraan).
 - Angka pakai titik desimal (contoh 4.5)."""
 
@@ -539,6 +558,7 @@ def _gemini_ke_hasil(data: dict) -> dict:
         "protein": ("protein_g", "protein"),
         "karbohidrat": ("karbohidrat_total_g", "carbohydrate_g", "karbohidrat"),
         "gula": ("gula_g", "gula_total_g", "sugar_g", "total_sugar_g", "sugars_g"),
+        "lemak_jenuh": ("lemak_jenuh_g", "saturated_fat_g", "lemak_jenuh", "saturated_fat"),
         "natrium": ("natrium_mg", "sodium_mg", "garam_natrium_mg", "salt_mg", "natrium", "sodium"),
         "lemak": ("lemak_total_g", "fat_total_g", "total_fat_g", "lemak_g", "fat_g", "lemak"),
     }
@@ -557,6 +577,34 @@ def _gemini_ke_hasil(data: dict) -> dict:
             break
     if hasil["sajian_per_kemasan"] in (None, 0):
         hasil["sajian_per_kemasan"] = 1
+    # nilai kolom "per 100 g/mL" kalau label mencetaknya
+    per100 = {}
+    for kunci_core, kandidat in {
+        "gula": ("per100_gula_g", "gula_per100_g"),
+        "natrium": ("per100_natrium_mg", "natrium_per100_mg"),
+        "lemak_jenuh": ("per100_lemak_jenuh_g", "lemak_jenuh_per100_g"),
+    }.items():
+        for k in kandidat:
+            v = data.get(k)
+            if v in (None, "", "null"):
+                continue
+            try:
+                per100[kunci_core] = round(float(v), 2)
+            except (TypeError, ValueError):
+                continue
+            break
+    if per100:
+        hasil["_per100"] = per100
+    # isi satu sajian (mL untuk minuman / g untuk makanan)
+    for k in ("isi_saji_ml_atau_g", "isi_saji", "isi_saji_g", "isi_saji_ml"):
+        v = data.get(k)
+        if v in (None, "", "null"):
+            continue
+        try:
+            hasil["isi_sajian"] = float(v)
+        except (TypeError, ValueError):
+            continue
+        break
     return hasil
 
 
