@@ -35,7 +35,7 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded",
 )
-st.markdown(ui.css() + ui.css_nutri_level(), unsafe_allow_html=True)
+st.markdown(ui.css() + ui.css_nutri_level() + ui.css_desain_a(), unsafe_allow_html=True)
 
 NAV = [
     "🏠 Beranda",
@@ -193,6 +193,18 @@ def halaman_beranda():
                        baris_tambahan=[f"≈ {fmt_jumlah(n['garam_g'])} / {fmt_jumlah(n['garam_batas_g'])} g garam"]),
         ui.kartu_total("🥑", "LEMAK TOTAL", l["konsumsi"], l["batas"], "g", l),
     ])
+
+    # lingkaran status hari ini (zat yang paling mendekati batas)
+    _pilih = max([("🍬 GULA", g), ("🧂 NATRIUM", n), ("🥑 LEMAK", l)], key=lambda t: t[1]["persen"])
+    _rr = _pilih[1]
+    st.markdown(ui.donat(
+        _rr["persen"], config.COLORS.get(_rr["warna"], "#1565C0"),
+        f"STATUS HARI INI · {_pilih[0]}",
+        fmt_persen(_rr["persen"]), "% batas harian",
+        f"{_rr['badge']} · {_rr['pesan']}",
+        f"Zat yang paling mendekati batas harian (konsumsi {fmt_jumlah(_rr['konsumsi'])} / "
+        f"{fmt_jumlah(_rr['batas'])}).",
+    ), unsafe_allow_html=True)
 
     st.markdown("---")
     b1, b2 = st.columns([1, 1])
@@ -416,6 +428,21 @@ def halaman_scan():
                    "label resmi pada kemasan.")
 
     with tab_har:
+        # lingkaran status produk ini (per 1 sajian) — gaya aplikasi HP
+        _rg = ringkas_zat(per_sajian["gula"], config.DAILY_LIMITS["sugar_g"])
+        _rn = ringkas_zat(per_sajian["natrium"], config.DAILY_LIMITS["sodium_mg"])
+        _rl = ringkas_zat(per_sajian["lemak"], config.DAILY_LIMITS["fat_g"])
+        _pp = max([("🍬 GULA", _rg), ("🧂 NATRIUM", _rn), ("🥑 LEMAK", _rl)],
+                  key=lambda t: t[1]["persen"])
+        st.markdown(ui.donat(
+            _pp[1]["persen"], config.COLORS.get(_pp[1]["warna"], "#1565C0"),
+            f"PRODUK INI (per 1 sajian) · {_pp[0]}",
+            fmt_persen(_pp[1]["persen"]), "% batas harian",
+            f"{_pp[1]['badge']} · {_pp[1]['pesan']}",
+            f"Zat paling mendekati batas harian pada produk ini "
+            f"({fmt_jumlah(_pp[1]['konsumsi'])} dari {fmt_jumlah(_pp[1]['batas'])}).",
+        ), unsafe_allow_html=True)
+
         if not st.session_state.added_ok:
             _blok_kandungan_produk(per_sajian, jumlah)
         else:
