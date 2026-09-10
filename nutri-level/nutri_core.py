@@ -497,8 +497,19 @@ class GeminiGagal(Exception):
     pass
 
 
-def _gemini_baca(byte_gambar: bytes, api_key: str):
-    b64 = base64.b64encode(byte_gambar).decode()
+def _mime_gambar(byte_gambar: bytes) -> str:
+    """Tebak tipe gambar dari beberapa byte pertama (PNG vs JPEG)."""
+    if byte_gambar[:8] == b"\x89PNG\r\n\x1a\n":
+        return "image/png"
+    return "image/jpeg"
+
+
+def _gemini_baca_multi(daftar_gambar, api_key: str, prompt: str):
+    """Kirim 1..N foto + prompt ke Gemini. Return (data_json, nama_model)."""
+    bagian = [{"text": prompt}]
+    for g in daftar_gambar:
+        bagian.append({"inline_data": {"mime_type": _mime_gambar(g),
+                                       "data": base64.b64encode(g).decode()}})
     kendala = []
     for model in _GEMINI_MODELS:
         url = (
@@ -506,14 +517,7 @@ def _gemini_baca(byte_gambar: bytes, api_key: str):
             f"{model}:generateContent?key={api_key}"
         )
         payload = {
-            "contents": [
-                {
-                    "parts": [
-                        {"text": _PROMPT_GEMINI},
-                        {"inline_data": {"mime_type": "image/png", "data": b64}},
-                    ]
-                }
-            ],
+            "contents": [{"parts": bagian}],
             "generationConfig": {"temperature": 0.0, "maxOutputTokens": 1024},
         }
         req = urllib.request.Request(
@@ -538,6 +542,10 @@ def _gemini_baca(byte_gambar: bytes, api_key: str):
         except Exception as exc:
             kendala.append(f"{model}: {type(exc).__name__}: {exc}")
     raise GeminiGagal(" ; ".join(kendala))
+
+
+def _gemini_baca(byte_gambar: bytes, api_key: str):
+    return _gemini_baca_multi([byte_gambar], api_key, _PROMPT_GEMINI)
 
 
 def _gemini_ke_hasil(data: dict) -> dict:
@@ -611,54 +619,144 @@ def _gemini_ke_hasil(data: dict) -> dict:
 # ---------------------------------------------------------------------------
 # Fungsi utama pembaca label
 # ---------------------------------------------------------------------------
-def read_nutrition_label(byte_gambar: bytes, gemini_key: Optional[str] = None) -> dict:
-    """Baca label dari byte gambar (PNG/JPEG dari kamera).
+# Field yang harus terisi otomatis (dipakai untuk cek kelengkapan & putaran kedua)
+FIELD_PENTING = ("nama_produk", "takaran_saji", "gula", "natrium", "lemak", "lemak_jenuh")
 
-    Mengembalikan dict hasil scan dengan kunci standar + '_sumber' + '_baris'.
-    Kalau tidak ada yang terbaca sama sekali -> dict nilai None.
+_PROMPT_LENGKAPI = """\
+Kamu pembaca label Informasi Nilai Gizi (nutrition facts) yang teliti.
+Foto bisa berupa beberapa sisi produk yang sama (mis. kemasan depan + tabel gizi).
+ABAIKAN kolom %AKG / %DV.
+Angka yang BELUM terbaca: {kurang}.
+Baca ULANG foto dengan teliti, lalu jawab HANYA JSON valid tanpa teks lain:
+{
+  "nama_produk": "nama produk atau null",
+  "takaran_saji": "contoh: 250 ml / 1 bungkus (35 g) atau null",
+  "isi_saji_ml_atau_g": null,
+  "sajian_per_kemasan": null,
+  "lemak_total_g": null,
+  "lemak_jenuh_g": null,
+  "gula_g": null,
+  "natrium_mg": null
+}
+Aturan:
+- Isi HANYA angka yang benar-benar terbaca & yakin; yang ragu isi null (jangan mengira-ngira).
+- Nilai sesuai takaran saji yang tercetak.
+- Gula = Gula/Total Sugars (bukan gula alkohol) · Natrium = Natrium/Sodium ·
+  Lemak total = Lemak Total/Total Fat (bukan jenuh/trans) · Lemak jenuh = Lemak Jenuh/Saturated Fat.
+- Angka pakai titik desimal (contoh 4.5)."""
+
+
+def field_kurang(hasil: dict) -> list:
+    """Daftar field penting yang masih kosong pada hasil pembacaan."""
+    kurang = []
+    for k in FIELD_PENTING:
+        v = (hasil or {}).get(k)
+        if v is None or (isinstance(v, str) and not v.strip()):
+            kurang.append(k)
+    return kurang
+
+
+def gabung_hasil(utama: dict, tambahan: dict) -> dict:
+    """Isi field yang masih kosong di `utama` memakai nilai dari `tambahan`."""
+    gab = dict(utama or {})
+    for k, v in (tambahan or {}).items():
+        if k.startswith("_"):
+            continue
+        if v is None or v == "" or v == "null":
+            continue
+        sekarang = gab.get(k)
+        if k == "sajian_per_kemasan":
+            if sekarang in (None, 0, 1) and float(v or 0) > 1:
+                gab[k] = v
+            continue
+        if sekarang is None or sekarang == "":
+            gab[k] = v
+    # gabungkan kolom per 100 (kalau ada di salah satu)
+    p1 = dict(utama.get("_per100") or {})
+    p2 = dict((tambahan or {}).get("_per100") or {})
+    p1.update({k: v for k, v in p2.items() if v is not None})
+    if p1:
+        gab["_per100"] = p1
+    return gab
+
+
+def read_nutrition_label(byte_gambar: bytes, gemini_key: Optional[str] = None,
+                        gambar_tambahan: Optional[list] = None) -> dict:
+    """Baca label dari 1..N foto (PNG/JPEG dari kamera).
+
+    - Semua foto dikirim sekaligus (mis. kemasan depan + tabel gizi) supaya AI punya
+      konteks lebih banyak.
+    - Kalau masih ada field penting yang kosong, dicoba PUTARAN KEDUA dengan prompt
+      yang menyebut field mana yang belum terbaca.
+    - Tanpa kunci AI / AI gagal -> OCR lokal pada semua foto, hasilnya digabung.
+
+    Mengembalikan dict hasil scan dengan kunci standar + '_sumber' + '_baris' + '_kurang'.
     """
+    daftar = [g for g in ([byte_gambar] + list(gambar_tambahan or [])) if g]
+
     if gemini_key:
+        catatan = None
         try:
-            data, model = _gemini_baca(byte_gambar, gemini_key)
+            data, model = _gemini_baca_multi(daftar, gemini_key, _PROMPT_GEMINI)
             if data:
                 hasil = _gemini_ke_hasil(data)
                 hasil["_sumber"] = f"gemini:{model}"
                 hasil["_baris"] = []
+                # putaran kedua: khusus mengisi yang masih kosong
+                kurang = field_kurang(hasil)
+                if kurang:
+                    try:
+                        prompt2 = _PROMPT_LENGKAPI.replace("{kurang}", ", ".join(kurang))
+                        data2, model2 = _gemini_baca_multi(daftar, gemini_key, prompt2)
+                        if data2:
+                            hasil = gabung_hasil(hasil, _gemini_ke_hasil(data2))
+                            hasil["_sumber"] = f"gemini:{model2} (2 putaran)"
+                    except Exception as exc2:
+                        hasil["_gemini_error2"] = f"{type(exc2).__name__}: {exc2}"
+                hasil["_kurang"] = field_kurang(hasil)
+                if len(daftar) > 1:
+                    hasil["_jumlah_foto"] = len(daftar)
                 return hasil
         except GeminiGagal as exc:
-            hasil = None
             catatan = str(exc)
         except Exception as exc:
-            hasil = None
             catatan = f"{type(exc).__name__}: {exc}"
-        # Gemini gagal -> jatuh ke OCR lokal, tapi catat alasannya
+        # Gemini gagal -> jatuh ke OCR lokal (semua foto), tapi catat alasannya
         try:
-            baris = ocr_ke_baris(byte_gambar)
-            hasil = parse_label_baris(baris)
-            hasil["_sumber"] = "ocr"
-            hasil["_baris"] = baris
-            if not hasil.get("nama_produk"):
-                hasil["nama_produk"] = tebak_nama_produk(baris)
+            hasil = _ocr_gabung(daftar)
             hasil["_gemini_error"] = catatan
+            hasil["_kurang"] = field_kurang(hasil)
             return hasil
         except Exception as exc:
             return {
-                "gula": None, "natrium": None, "lemak": None,
+                "gula": None, "natrium": None, "lemak": None, "lemak_jenuh": None,
                 "protein": None, "karbohidrat": None, "energi": None,
                 "takaran_saji": None, "sajian_per_kemasan": 1, "nama_produk": None,
-                "_baris": [], "_sumber": "gagal",
+                "_baris": [], "_sumber": "gagal", "_kurang": list(FIELD_PENTING),
                 "_gemini_error": catatan,
                 "_ocr_error": str(exc),
             }
 
-    baris = ocr_ke_baris(byte_gambar)
-    hasil = parse_label_baris(baris)
+    hasil = _ocr_gabung(daftar)
+    hasil["_kurang"] = field_kurang(hasil)
+    return hasil
+
+
+def _ocr_gabung(daftar_gambar: list) -> dict:
+    """OCR lokal untuk semua foto, hasilnya digabung (field kosong diisi dari foto lain)."""
+    hasil, baris_semua = {}, []
+    for g in daftar_gambar:
+        baris = ocr_ke_baris(g)
+        baris_semua += baris
+        hasil = gabung_hasil(hasil, parse_label_baris(baris))
     hasil["_sumber"] = "ocr"
-    hasil["_baris"] = baris
+    hasil["_baris"] = baris_semua
     # tebak nama produk hanya kalau angka gizinya kebaca (kalau OCR kacau, nama bisa sampah)
     if not hasil.get("nama_produk") and sum(
             1 for k in ("gula", "natrium", "lemak") if hasil.get(k) is not None) >= 2:
-        hasil["nama_produk"] = tebak_nama_produk(baris)
+        hasil["nama_produk"] = tebak_nama_produk(baris_semua)
+    if len(daftar_gambar) > 1:
+        hasil["_jumlah_foto"] = len(daftar_gambar)
     return hasil
 
 
