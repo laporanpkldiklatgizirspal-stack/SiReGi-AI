@@ -1,0 +1,16 @@
+{
+  "name": "GiziLens — Scan Label Gizi & Tracker GGL Harian",
+  "short_name": "GiziLens",
+  "description": "Pindai label Informasi Nilai Gizi dengan kamera, kenali Gula/Garam/Lemak, dan pantau batas harianmu.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F7FAFD",
+  "theme_color": "#1565C0",
+  "lang": "id",
+  "icons": [
+    { "src": "assets/logo_rspal.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "assets/logo_rspal.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}
